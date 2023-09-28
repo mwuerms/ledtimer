@@ -117,16 +117,11 @@ void display_Update(void) {
 	display_buffer.rd_origin = _scroll(display_buffer.rd_origin, display_buffer.wr_index);
 	display_buffer.rd_index = _next(display_buffer.rd_origin, display_buffer.wr_index, col_cnt);
 
-
 	display_ShowCol(col_cnt, display_buffer.buffer[display_buffer.rd_index]);
 	col_cnt++;
 	if(col_cnt >= DISPLAY_NB_COLUMNS) {
 		col_cnt = 0;
 	}
-
-
-
-
 }
 
 

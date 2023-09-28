@@ -17,6 +17,8 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
+/* Includes ------------------------------------------------------------------*/
+#include "lptim.h"
 
 /* USER CODE BEGIN 0 */
 /* Includes ------------------------------------------------------------------*/
@@ -57,6 +59,7 @@ void MX_LPTIM1_Init(void)
   /* USER CODE BEGIN LPTIM1_Init 2 */
 
   /* USER CODE END LPTIM1_Init 2 */
+
 }
 
 void HAL_LPTIM_MspInit(LPTIM_HandleTypeDef* lptimHandle)
@@ -254,5 +257,3 @@ void lptim_StopDisplayUpdate(void) {
 }
 
 /* USER CODE END 1 */
-
-

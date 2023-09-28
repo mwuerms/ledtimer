@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "lptim.h"
+#include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -52,7 +54,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+volatile uint32_t global_events;
 /* USER CODE END 0 */
 
 /**
@@ -62,7 +64,7 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	static uint32_t local_events;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -82,8 +84,18 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_LPTIM1_Init();
   /* USER CODE BEGIN 2 */
+  display_Init();
+  lptim_Start();
 
+
+  display_ShowString("Lego 1234!");
+  display_On();
+
+  uint32_t tim_nr = lptim_AddRepeatingEvent(32768/8/2/2/2, EV_BLINK2);
+  uint32_t cnt_tim = 100;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -93,6 +105,39 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  if(local_events & EV_DISPLAY_UPDATE) {
+		  display_Update();
+	  }
+
+	  if(local_events & EV_BLINK) {
+		  lptim_AddSingleEvent(32768/8, EV_BLINK);
+		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
+	  }
+	  if(local_events & EV_BLINK2) {
+		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
+		  if(cnt_tim == 0) {
+			  lptim_RemoveEvent(tim_nr);
+		  }
+		  else {
+			  cnt_tim--;
+		  }
+	  }
+
+	  while(1) {
+		  // ATOMIC: disable INT until enter sleep ! -> attention: possible dead lock
+		  __disable_irq();
+		  local_events = global_events;
+		  global_events = 0;
+		  if(local_events) {
+			  break;
+		  }
+
+		  HAL_PWR_EnableSleepOnExit();
+		  __enable_irq();
+		  HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+	  }
+
+
   }
   /* USER CODE END 3 */
 }
@@ -116,10 +161,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
-  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
-  RCC_OscInitStruct.MSICalibrationValue = 0;
-  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
@@ -130,8 +175,8 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV8;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
