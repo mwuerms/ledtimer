@@ -17,10 +17,13 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
-#include "lptim.h"
 
 /* USER CODE BEGIN 0 */
+/* Includes ------------------------------------------------------------------*/
+#include "macros.h"
+#include "main.h"
+#include "lptim.h"
+#include "display.h"
 
 /* USER CODE END 0 */
 
@@ -54,7 +57,6 @@ void MX_LPTIM1_Init(void)
   /* USER CODE BEGIN LPTIM1_Init 2 */
 
   /* USER CODE END LPTIM1_Init 2 */
-
 }
 
 void HAL_LPTIM_MspInit(LPTIM_HandleTypeDef* lptimHandle)
@@ -108,5 +110,149 @@ void HAL_LPTIM_MspDeInit(LPTIM_HandleTypeDef* lptimHandle)
 }
 
 /* USER CODE BEGIN 1 */
+// - private ---------------------------------
+typedef struct {
+	uint32_t ctrl;
+	uint32_t periode_reload;
+	uint32_t periode_cnt;
+	uint32_t events;
+} lptim_events_t;
+#define LPTIM_EVENTS_CTRL_ACTIVE	BIT(31)
+#define LPTIM_EVENTS_CTRL_REPEATE	BIT(30)
+
+static volatile lptim_events_t lptim_events[LPTIM_NB_EVENTS];
+
+static uint32_t lptim_Find_Free_Event(void){
+	uint32_t n;
+	for(n = 0; n < LPTIM_NB_EVENTS; n++) {
+		if((lptim_events[n].ctrl & LPTIM_EVENTS_CTRL_ACTIVE) == 0) {
+			// unused
+			return n;
+		}
+	}
+	return LPTIM_NB_EVENTS;
+}
+
+static volatile lptim_display_ctrl = 0;
+#define LPTIM_DISPLAY_CTRL_ON	BIT(0)
+
+void HAL_LPTIM_AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim) {
+	uint8_t n;
+	for(n = 0; n < LPTIM_NB_EVENTS; n++) {
+		if((lptim_events[n].ctrl & LPTIM_EVENTS_CTRL_ACTIVE)) {
+			if(lptim_events[n].periode_cnt == 0) {
+				global_events |= lptim_events[n].events;
+				if((lptim_events[n].ctrl & LPTIM_EVENTS_CTRL_REPEATE)) {
+					lptim_events[n].periode_cnt = lptim_events[n].periode_reload;
+				}
+				else {
+					lptim_events[n].ctrl &= ~LPTIM_EVENTS_CTRL_ACTIVE;
+				}
+			}
+			else {
+				lptim_events[n].periode_cnt--;
+			}
+		}
+	}
+
+	if(global_events)
+		HAL_PWR_DisableSleepOnExit();
+}
+
+// - public ---------------------------------
+void lptim_Start(void) {
+	HAL_LPTIM_Counter_Start_IT(&hlptim1, LPTIM_CLK_INTERVAL);
+}
+
+uint32_t lptim_AddSingleEvent(uint32_t periode, uint32_t event) {
+	if(event == 0) {
+		// error, cannot add event, there is none given
+		// else this could result in a possible dead lock
+		return LPTIM_COULD_NOT_ADD_EVENT;
+	}
+
+	// ATOMIC
+	uint32_t restore_irq;
+	ENTER_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
+
+	// find 1st free lptim_events
+	uint32_t ret = LPTIM_COULD_NOT_ADD_EVENT;	// default: no free lptim_event
+	uint32_t lptim_event_nr = lptim_Find_Free_Event();
+	if(lptim_event_nr < LPTIM_NB_EVENTS) {
+		// found free lptim_event
+		ret = lptim_event_nr;
+		lptim_events[lptim_event_nr].periode_cnt = periode;
+		lptim_events[lptim_event_nr].periode_reload = periode;
+		lptim_events[lptim_event_nr].events = event;
+		lptim_events[lptim_event_nr].ctrl = LPTIM_EVENTS_CTRL_ACTIVE;
+	}
+
+	LEAVE_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
+	return ret;
+}
+
+uint32_t lptim_AddRepeatingEvent(uint32_t periode, uint32_t event) {
+	if(event == 0) {
+		// error, cannot add event, there is none given
+		// else this could result in a possible dead lock
+		return LPTIM_COULD_NOT_ADD_EVENT;
+	}
+
+	// ATOMIC
+	uint32_t restore_irq;
+	ENTER_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
+
+	// find 1st free lptim_events
+	uint32_t ret = LPTIM_COULD_NOT_ADD_EVENT;	// default: no free lptim_event
+	uint32_t lptim_event_nr = lptim_Find_Free_Event();
+	if(lptim_event_nr < LPTIM_NB_EVENTS) {
+		// found free lptim_event
+		ret = lptim_event_nr;
+		lptim_events[lptim_event_nr].periode_cnt = periode;
+		lptim_events[lptim_event_nr].periode_reload = periode;
+		lptim_events[lptim_event_nr].events = event;
+		lptim_events[lptim_event_nr].ctrl = LPTIM_EVENTS_CTRL_ACTIVE | LPTIM_EVENTS_CTRL_REPEATE;
+	}
+
+	LEAVE_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
+	return ret;
+}
+
+uint32_t lptim_RemoveEvent(uint32_t lptim_event_nr) {
+	if(lptim_event_nr >= LPTIM_NB_EVENTS) {
+		return RET_ERROR;
+	}
+
+	// ATOMIC
+	uint32_t restore_irq;
+	ENTER_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
+
+	lptim_events[lptim_event_nr].ctrl = 0;
+
+	LEAVE_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
+	return RET_SUCCESS;
+}
+
+void lptim_StartDisplayUpdate(void) {
+	// ATOMIC
+	uint32_t restore_irq;
+	ENTER_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
+
+
+	LEAVE_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
+	return RET_SUCCESS;
+}
+
+void lptim_StopDisplayUpdate(void) {
+	// ATOMIC
+	uint32_t restore_irq;
+	ENTER_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
+
+
+	LEAVE_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
+	return RET_SUCCESS;
+}
 
 /* USER CODE END 1 */
+
+

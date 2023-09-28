@@ -54,7 +54,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+volatile uint32_t global_events;
 /* USER CODE END 0 */
 
 /**
@@ -64,7 +64,7 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	static uint32_t local_events;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,7 +87,15 @@ int main(void)
   MX_GPIO_Init();
   MX_LPTIM1_Init();
   /* USER CODE BEGIN 2 */
+  display_Init();
+  lptim_Start();
 
+
+  display_ShowString("Lego 1234!");
+  display_On();
+
+  uint32_t tim_nr = lptim_AddRepeatingEvent(32768/8/2/2/2, EV_BLINK2);
+  uint32_t cnt_tim = 100;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -97,6 +105,39 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  if(local_events & EV_DISPLAY_UPDATE) {
+		  display_Update();
+	  }
+
+	  if(local_events & EV_BLINK) {
+		  lptim_AddSingleEvent(32768/8, EV_BLINK);
+		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
+	  }
+	  if(local_events & EV_BLINK2) {
+		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
+		  if(cnt_tim == 0) {
+			  lptim_RemoveEvent(tim_nr);
+		  }
+		  else {
+			  cnt_tim--;
+		  }
+	  }
+
+	  while(1) {
+		  // ATOMIC: disable INT until enter sleep ! -> attention: possible dead lock
+		  __disable_irq();
+		  local_events = global_events;
+		  global_events = 0;
+		  if(local_events) {
+			  break;
+		  }
+
+		  HAL_PWR_EnableSleepOnExit();
+		  __enable_irq();
+		  HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+	  }
+
+
   }
   /* USER CODE END 3 */
 }

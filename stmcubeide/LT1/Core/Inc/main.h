@@ -114,6 +114,13 @@ void Error_Handler(void);
 #define SW0_Pin GPIO_PIN_9
 #define SW0_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
+#include "macros.h"
+
+extern volatile uint32_t global_events;
+#define EV_WAKEUP	BIT(0)
+#define EV_DISPLAY_UPDATE BIT(1)
+#define EV_BLINK	BIT(2)
+#define EV_BLINK2	BIT(3)
 
 /* USER CODE END Private defines */
 
