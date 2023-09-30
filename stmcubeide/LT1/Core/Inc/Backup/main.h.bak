@@ -57,6 +57,9 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define USR_BTN_Pin GPIO_PIN_13
+#define USR_BTN_GPIO_Port GPIOC
+#define USR_BTN_EXTI_IRQn EXTI15_10_IRQn
 #define ALM0_Pin GPIO_PIN_0
 #define ALM0_GPIO_Port GPIOH
 #define ALM1_Pin GPIO_PIN_1
@@ -77,12 +80,15 @@ void Error_Handler(void);
 #define DISP_ROW6_GPIO_Port GPIOA
 #define DISP_COL_SER_Pin GPIO_PIN_7
 #define DISP_COL_SER_GPIO_Port GPIOA
-#define BTN_UP1_Pin GPIO_PIN_0
+#define BTN_UP0_Pin GPIO_PIN_0
+#define BTN_UP0_GPIO_Port GPIOB
+#define BTN_UP0_EXTI_IRQn EXTI0_IRQn
+#define BTN_UP1_Pin GPIO_PIN_1
 #define BTN_UP1_GPIO_Port GPIOB
-#define BTN_UP2_Pin GPIO_PIN_1
+#define BTN_UP1_EXTI_IRQn EXTI1_IRQn
+#define BTN_UP2_Pin GPIO_PIN_2
 #define BTN_UP2_GPIO_Port GPIOB
-#define BTN_UP3_Pin GPIO_PIN_2
-#define BTN_UP3_GPIO_Port GPIOB
+#define BTN_UP2_EXTI_IRQn EXTI2_IRQn
 #define SW1_Pin GPIO_PIN_10
 #define SW1_GPIO_Port GPIOB
 #define SW2_Pin GPIO_PIN_11
@@ -99,18 +105,23 @@ void Error_Handler(void);
 #define DISP_COL_SRCLR_GPIO_Port GPIOA
 #define DISP_COL_OE_Pin GPIO_PIN_15
 #define DISP_COL_OE_GPIO_Port GPIOA
-#define BTN_UP4_Pin GPIO_PIN_3
-#define BTN_UP4_GPIO_Port GPIOB
+#define BTN_UP3_Pin GPIO_PIN_3
+#define BTN_UP3_GPIO_Port GPIOB
+#define BTN_UP3_EXTI_IRQn EXTI3_IRQn
 #define BTN_PLAY_Pin GPIO_PIN_4
 #define BTN_PLAY_GPIO_Port GPIOB
+#define BTN_PLAY_EXTI_IRQn EXTI4_IRQn
 #define BTN_MODE_Pin GPIO_PIN_5
 #define BTN_MODE_GPIO_Port GPIOB
+#define BTN_MODE_EXTI_IRQn EXTI9_5_IRQn
 #define BTN_STOP_Pin GPIO_PIN_6
 #define BTN_STOP_GPIO_Port GPIOB
+#define BTN_STOP_EXTI_IRQn EXTI9_5_IRQn
 #define CH_STAT_Pin GPIO_PIN_7
 #define CH_STAT_GPIO_Port GPIOB
 #define USB_STAT_Pin GPIO_PIN_8
 #define USB_STAT_GPIO_Port GPIOB
+#define USB_STAT_EXTI_IRQn EXTI9_5_IRQn
 #define SW0_Pin GPIO_PIN_9
 #define SW0_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
@@ -121,6 +132,7 @@ extern volatile uint32_t global_events;
 #define EV_DISPLAY_UPDATE BIT(1)
 #define EV_BLINK	BIT(2)
 #define EV_BLINK2	BIT(3)
+#define EV_BUTTON	BIT(4)
 
 /* USER CODE END Private defines */
 

@@ -22,14 +22,23 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
+#include "lptim.h"
 
+static uint32_t gpio_lptim_nr;
 /* USER CODE END 0 */
 
 /*----------------------------------------------------------------------------*/
 /* Configure GPIO                                                             */
 /*----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	if(GPIO_Pin == USR_BTN_Pin) {
+		//global_events |= EV_WAKEUP;
+	}
 
+	if(global_events)
+		HAL_PWR_DisableSleepOnExit();
+}
 /* USER CODE END 1 */
 
 /** Configure pins as
@@ -132,19 +141,106 @@ void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-#warning "_DISPLAY GPIOC"
-    /*Configure GPIO pins : PBPin PBPin */
-  	GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_3|GPIO_PIN_2|GPIO_PIN_1|GPIO_PIN_0;
-  	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  	GPIO_InitStruct.Pull = GPIO_NOPULL;
-  	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  gpio_lptim_nr = 0;
 
-  	GPIO_InitStruct.Pin = SW4_Pin;
+
+	#warning "_DISPLAY GPIOC"
+	/*Configure GPIO pins : PBPin PBPin */
+	GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_3|GPIO_PIN_2|GPIO_PIN_1|GPIO_PIN_0;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = SW4_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
 /* USER CODE BEGIN 2 */
+
+static uint8_t gpio_input_states[GPIO_NB_INPUTS];		// store GPIO_STATE_RELEASED, GPIO_STATE_SHORT_PRESSED, GPIO_STATE_LONG_PRESSED
+static uint8_t gpio_input_values[GPIO_NB_INPUTS];
+static uint8_t gpio_input_states_buffer[GPIO_NB_INPUTS]; // store all the HAL_GPIO_ReadPin()
+static uint8_t gpio_input_value_cnt[GPIO_NB_INPUTS];	// count when it is pressed or low
+
+typedef struct {
+	GPIO_TypeDef *port;
+	uint16_t pin;
+} gpio_inputs_def_t;
+
+static const gpio_inputs_def_t gpio_inputs[] = {
+		{ .port = BTN_UP0_GPIO_Port, .pin = BTN_UP0_Pin},
+		{ .port = BTN_UP1_GPIO_Port, .pin = BTN_UP1_Pin},
+		{ .port = BTN_UP2_GPIO_Port, .pin = BTN_UP2_Pin},
+		{ .port = BTN_UP3_GPIO_Port, .pin = BTN_UP3_Pin},
+		{ .port = BTN_PLAY_GPIO_Port, .pin = BTN_PLAY_Pin},
+		{ .port = BTN_MODE_GPIO_Port, .pin = BTN_MODE_Pin},
+		{ .port = BTN_STOP_GPIO_Port, .pin = BTN_STOP_Pin},
+		{ .port = CH_STAT_GPIO_Port, .pin = CH_STAT_Pin},
+		{ .port = USB_STAT_GPIO_Port, .pin = USB_STAT_Pin},
+		{ .port = USR_BTN_GPIO_Port, .pin = USR_BTN_Pin},
+};
+
+#define GPIO_CURRENT_VALUE_MASK	(0x01)
+#define GPIO_BTN_STATE_MASK	(0xFF)
+
+void gpio_PollInputs(void) {
+	uint32_t n;
+	// shift all to store old values
+	for(n = 0; n < GPIO_NB_INPUTS; n++) {
+		gpio_input_values[n] <<= 1;
+		gpio_input_values[n] |= HAL_GPIO_ReadPin(gpio_inputs[n].port, gpio_inputs[n].pin);
+	}
+
+	// eval inputs
+	if((gpio_input_values[GPIO_INDEX_USR_BTN] & GPIO_CURRENT_VALUE_MASK) == 0x00000000) {
+		gpio_input_states[GPIO_INDEX_USR_BTN] = GPIO_STATE_BTN_RELEASED;
+		gpio_input_value_cnt[GPIO_INDEX_USR_BTN] = 0;
+	}
+	else {
+		gpio_input_states[GPIO_INDEX_USR_BTN] = GPIO_STATE_BTN_PRESSED;
+	}
+
+	if(gpio_input_value_cnt[GPIO_INDEX_USR_BTN] == 0) {
+		if((gpio_input_values[GPIO_INDEX_USR_BTN] & GPIO_BTN_STATE_MASK) == 0x000F) {
+			gpio_input_states[GPIO_INDEX_USR_BTN] = GPIO_STATE_BTN_SHORT_PRESSED;
+			gpio_input_value_cnt[GPIO_INDEX_USR_BTN] = GPIO_STATE_CNT_LONG;
+		}
+	}
+	else {
+		if(gpio_input_value_cnt[GPIO_INDEX_USR_BTN] == 1) {
+			gpio_input_states[GPIO_INDEX_USR_BTN] = GPIO_STATE_BTN_LONG_PRESSED;
+			gpio_input_value_cnt[GPIO_INDEX_USR_BTN] = GPIO_STATE_CNT_LONG;
+		}
+		gpio_input_value_cnt[GPIO_INDEX_USR_BTN]--;
+	}
+
+}
+
+void gpio_GetCopyOfInputStates(uint8_t* copy_states) {
+	uint8_t n;
+	for(n = 0; n < GPIO_NB_INPUTS; n++) {
+		copy_states[n] = gpio_input_states[n];
+	}
+}
+
+
+void gpio_StartPolling(void) {
+	gpio_lptim_nr = lptim_AddRepeatingEvent(LPTIM_PERIODE_2MS, EV_GPIO_POLL);
+}
+
+void gpio_StopPolling(void) {
+	lptim_RemoveEvent(gpio_lptim_nr);
+}
+
+void gpio_enablebuttoninterrupts(void) {
+	return;
+}
+
+void gpio_disablebuttoninterrupts(void) {
+	return;
+}
+
 #if 0
 __HAL_RCC_GPIOC_CLK_ENABLE();
 

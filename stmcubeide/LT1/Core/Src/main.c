@@ -23,6 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "display.h"
 
 /* USER CODE END Includes */
 
@@ -65,6 +66,9 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	static uint32_t local_events;
+	uint8_t pattern[] = {0x08, 0x1C, 0x3E, 0x7F, 0x08, 0x1C, 0x3E, 0x7F, 0x00, 0x08, 0x00, 0x10, 0x00, 0x20, 0x00, 0x40, 0x00, 0x01, 0x00, 0x02, 0x00, 0x04, 0x08, 0x14, 0x22, 0x41, 0x22, 0x14};
+	uint8_t pattern_len = 28;
+	uint8_t copy_gpio_states[GPIO_NB_INPUTS];
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -89,9 +93,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
   display_Init();
   lptim_Start();
+  gpio_StartPolling();
 
-
-  display_ShowString("Lego 1234!");
+  //display_ShowString("Lego#1234!");
+  display_ShowBuffer(pattern, pattern_len);
   display_On();
 
   uint32_t tim_nr = 0;
@@ -106,11 +111,24 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  if(local_events & EV_WAKEUP) {
+		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
+	  }
 	  if(local_events & EV_DISPLAY_UPDATE) {
 		  display_Update();
 	  }
-	  if(local_events & EV_BUTTON) {
-		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
+	  if(local_events & EV_GPIO_POLL) {
+		  gpio_PollInputs();
+		  gpio_GetCopyOfInputStates(copy_gpio_states);
+		  if(copy_gpio_states[GPIO_INDEX_USR_BTN] == GPIO_STATE_BTN_RELEASED) {
+			  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+		  }
+		  else if(copy_gpio_states[GPIO_INDEX_USR_BTN] == GPIO_STATE_BTN_SHORT_PRESSED) { // short works
+			  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
+		  }
+		  else if(copy_gpio_states[GPIO_INDEX_USR_BTN] == GPIO_STATE_BTN_LONG_PRESSED) {
+			  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
+		  }
 	  }
 
 	  if(local_events & EV_BLINK) {

@@ -17,5 +17,5 @@ void display_Off(void);
 void display_Update(void);
 
 void display_ShowString(char *str);
-
+void display_ShowBuffer(uint8_t *data, uint32_t len);
 #endif /* INC_DISPLAY_H_ */

@@ -23,6 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "display.h"
 
 /* USER CODE END Includes */
 
@@ -91,10 +92,11 @@ int main(void)
   lptim_Start();
 
 
-  display_ShowString("Lego 1234!");
+  display_ShowString("Lego#1234!");
   display_On();
 
-  uint32_t tim_nr = lptim_AddRepeatingEvent(32768/8/2/2/2, EV_BLINK2);
+  uint32_t tim_nr = 0;
+  //lptim_AddRepeatingEvent(32768/8/2/2/2, EV_BLINK2);
   uint32_t cnt_tim = 100;
   /* USER CODE END 2 */
 
@@ -107,6 +109,9 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  if(local_events & EV_DISPLAY_UPDATE) {
 		  display_Update();
+	  }
+	  if(local_events & EV_BUTTON) {
+		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
 	  }
 
 	  if(local_events & EV_BLINK) {
@@ -136,8 +141,6 @@ int main(void)
 		  __enable_irq();
 		  HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 	  }
-
-
   }
   /* USER CODE END 3 */
 }

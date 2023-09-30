@@ -64,6 +64,8 @@ void display_ShowCol(uint32_t col_nr, uint32_t row_data) {
 // - public ----------------------------
 void display_Init(void) {
 	display_lptim_nr = 0;
+
+	// gpios: see gpio.c
 }
 
 void display_On(void) {
@@ -151,5 +153,20 @@ void display_ShowString(char *str) {
 			break;
 		}
 		str++;
+	}
+}
+
+void display_ShowBuffer(uint8_t *data, uint32_t len) {
+	if(len == 0) {
+		// error, nothing to show, do not change display_buffer
+		return;
+	}
+	display_ClearDisplayBuffer();
+	for(display_buffer.wr_index = 0; display_buffer.wr_index < DISPLAY_BUFFER_SIZE; display_buffer.wr_index++) {
+		display_buffer.buffer[display_buffer.wr_index] = data[display_buffer.wr_index];
+		len--;
+		if(len == 0) {
+			break;
+		}
 	}
 }

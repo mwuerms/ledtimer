@@ -130,9 +130,10 @@ void Error_Handler(void);
 extern volatile uint32_t global_events;
 #define EV_WAKEUP	BIT(0)
 #define EV_DISPLAY_UPDATE BIT(1)
-#define EV_BLINK	BIT(2)
-#define EV_BLINK2	BIT(3)
-#define EV_BUTTON	BIT(4)
+#define EV_GPIO_POLL	BIT(2)
+#define EV_BLINK	BIT(13)
+#define EV_BLINK2	BIT(14)
+#define EV_BUTTON	BIT(15)
 
 /* USER CODE END Private defines */
 
