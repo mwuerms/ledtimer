@@ -24,7 +24,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "display.h"
-
+#include "mainapp.h"
+#include "timer1app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -96,8 +97,11 @@ int main(void)
   gpio_StartPolling();
 
   //display_ShowString("Lego#1234!");
-  display_ShowBuffer(pattern, pattern_len);
+  //display_ShowBuffer(pattern, pattern_len);
   display_On();
+
+  mainapp_Init();
+  mainapp_Start();
 
   uint32_t tim_nr = 0;
   //lptim_AddRepeatingEvent(32768/8/2/2/2, EV_BLINK2);
@@ -130,6 +134,13 @@ int main(void)
 			  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
 		  }
 	  }
+	  if(local_events & EV_MAINAPP_TIME) {
+		  mainapp_TimerEvents(EV_MAINAPP_TIME);
+	  }
+	  if(local_events & EV_TIMER1APP_TIME) {
+		  timer1app_TimerEvents(EV_TIMER1APP_TIME);
+	  }
+
 
 	  if(local_events & EV_BLINK) {
 		  lptim_AddSingleEvent(32768/8, EV_BLINK);

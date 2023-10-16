@@ -41,11 +41,14 @@ extern LPTIM_HandleTypeDef hlptim1;
 void MX_LPTIM1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-#define LPTIM_SOURCE_CLK (32768)
+#define LPTIM_SOURCE_CLK (32768UL)
 #define LPTIM_CLK_INTERVAL (8)	// 8/32768 Hz = 244 us
 #define LPTIM_NB_EVENTS	(4)
 
 #define LPTIM_PERIODE_2MS	(10)	// 10 * 244 us = 2.44 ms
+#define LPTIM_PERIODE_1S	(LPTIM_SOURCE_CLK/LPTIM_CLK_INTERVAL)
+#define LPTIM_PERIODE_0_5S	(LPTIM_PERIODE_1S/2)
+
 
 void lptim_Start(void);
 

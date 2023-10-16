@@ -170,3 +170,36 @@ void display_ShowBuffer(uint8_t *data, uint32_t len) {
 		}
 	}
 }
+
+/*void display_UpdateBuffer(uint8_t *data, uint32_t len, uint32_t pos) {
+	if(len == 0) {
+		// error, nothing to show, do not change display_buffer
+		return;
+	}
+	if(pos >= DISPLAY_BUFFER_SIZE) {
+		// error, outside buffer size
+		return;
+	}
+}*/
+
+void display_ShowTime(uint8_t mins, uint8_t secs) {
+	uint8_t tens;
+	display_ClearDisplayBuffer();
+	tens = mins/10;
+	display_AddCharToDisplayBuffer(tens+'0');
+	display_AddCharToDisplayBuffer(mins-(tens*10)+'0');
+
+	display_buffer.buffer[display_buffer.wr_index++] = font[':'-0x20][2];
+
+	tens = secs/10;
+	display_AddCharToDisplayBuffer(tens+'0');
+	display_AddCharToDisplayBuffer(secs-(tens*10)+'0');
+}
+
+void display_UpdateTime(uint8_t mins, uint8_t secs) {
+
+}
+
+void display_UpdateTimeSeparator(uint8_t show) {
+
+}

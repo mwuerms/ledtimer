@@ -131,6 +131,10 @@ extern volatile uint32_t global_events;
 #define EV_WAKEUP	BIT(0)
 #define EV_DISPLAY_UPDATE BIT(1)
 #define EV_GPIO_POLL	BIT(2)
+
+#define EV_MAINAPP_TIME	BIT(3)
+#define EV_TIMER1APP_TIME BIT(4)
+
 #define EV_BLINK	BIT(13)
 #define EV_BLINK2	BIT(14)
 #define EV_BUTTON	BIT(15)
