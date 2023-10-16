@@ -7,7 +7,7 @@
 
 #include "mainapp.h"
 #include "gpio.h"
-#include "display.h"
+#include "dispBuffer.h"
 #include "lptim.h"
 
 void mainapp_Init(void) {
@@ -15,7 +15,7 @@ void mainapp_Init(void) {
 }
 
 void mainapp_Start(void) {
-	display_ShowString("main_is_rolling!");
+	dispBuffer_AddString("main_is_rolling!");
 	lptim_AddSingleEvent(LPTIM_PERIODE_1S, EV_MAINAPP_TIME);
 }
 

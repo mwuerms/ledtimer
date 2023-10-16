@@ -7,11 +7,12 @@
 
 // - private ------------------------------
 #include "display.h"
+#include "dispBuffer.h"
 #include "lptim.h"
-#include "fontmonospace.h"
 
 #warning "__DISPLAY: 1 element only"
 
+/*
 #define DISPLAY_NB_COLUMNS	5 // 1 element only (5*6)
 #define DISPLAY_NB_ROWS	(7)	// 1 byte
 #define DISPLAY_ROW_MASK (0x7F)
@@ -24,14 +25,9 @@ typedef struct {
 } display_buffer_t;
 
 static display_buffer_t display_buffer;
-
+*/
 
 static uint32_t display_lptim_nr = 0;
-
-
-
-
-
 
 void display_ShowCol(uint32_t col_nr, uint32_t row_data) {
 	GPIOA->ODR = 0;
@@ -60,11 +56,15 @@ void display_ShowCol(uint32_t col_nr, uint32_t row_data) {
 	GPIOA->ODR = row_data & DISPLAY_ROW_MASK;
 }
 
+disp_buffer_t *display_buffer;
 
 // - public ----------------------------
 void display_Init(void) {
 	display_lptim_nr = 0;
 
+	dispBuffer_Init();
+	display_buffer = dispBuffer_Get();
+	dispBuffer_Clear();
 	// gpios: see gpio.c
 }
 
@@ -116,10 +116,10 @@ static uint32_t _scroll(uint32_t rd_origin, uint32_t wr_origin) {
 void display_Update(void) {
 	static uint32_t col_cnt = 0;
 
-	display_buffer.rd_origin = _scroll(display_buffer.rd_origin, display_buffer.wr_index);
-	display_buffer.rd_index = _next(display_buffer.rd_origin, display_buffer.wr_index, col_cnt);
+	display_buffer->rd_origin = _scroll(display_buffer->rd_origin, display_buffer->wr_index);
+	display_buffer->rd_index = _next(display_buffer->rd_origin, display_buffer->wr_index, col_cnt);
 
-	display_ShowCol(col_cnt, display_buffer.buffer[display_buffer.rd_index]);
+	display_ShowCol(col_cnt, display_buffer->buffer[display_buffer->rd_index]);
 	col_cnt++;
 	if(col_cnt >= DISPLAY_NB_COLUMNS) {
 		col_cnt = 0;
@@ -127,7 +127,7 @@ void display_Update(void) {
 }
 
 
-
+/*
 static void display_ClearDisplayBuffer(void) {
 	for(display_buffer.wr_index = 0; display_buffer.wr_index < DISPLAY_BUFFER_SIZE; display_buffer.wr_index++) {
 		display_buffer.buffer[display_buffer.wr_index] = 0;
@@ -171,7 +171,7 @@ void display_ShowBuffer(uint8_t *data, uint32_t len) {
 	}
 }
 
-/*void display_UpdateBuffer(uint8_t *data, uint32_t len, uint32_t pos) {
+/ *void display_UpdateBuffer(uint8_t *data, uint32_t len, uint32_t pos) {
 	if(len == 0) {
 		// error, nothing to show, do not change display_buffer
 		return;
@@ -180,7 +180,7 @@ void display_ShowBuffer(uint8_t *data, uint32_t len) {
 		// error, outside buffer size
 		return;
 	}
-}*/
+}* /
 
 void display_ShowTime(uint8_t mins, uint8_t secs) {
 	uint8_t tens;
@@ -203,3 +203,4 @@ void display_UpdateTime(uint8_t mins, uint8_t secs) {
 void display_UpdateTimeSeparator(uint8_t show) {
 
 }
+*/
