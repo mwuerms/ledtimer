@@ -9,6 +9,7 @@
 #include "dispBuffer.h"
 #include "display.h"
 #include "fontmonospace.h"
+#include "string.h"
 
 // - private ------------------------------------------------------------------------
 static disp_buffer_t disp_buffer;
@@ -93,3 +94,70 @@ uint16_t dispBuffer_ChangeRows(uint8_t *row_data, uint16_t nb_rows, uint16_t pos
 	return RET_SUCCESS;
 }
 
+uint16_t dispBuffer_ChangeChar(char c, uint16_t pos) {
+	if((pos + 6) >= DISP_BUFFER_SIZE)
+		return RET_ERROR;
+	dispBuffer_ChangeRows((uint8_t *)(font[c-0x20]), 5, pos);
+	dispBuffer_ChangeRow(FONT_CHAR_SEPARATOR, pos+5);
+	return RET_SUCCESS;
+}
+
+uint16_t dispBuffer_ChangeString(char *str, uint16_t pos) {
+	while(*str != 0) {
+		if(dispBuffer_ChangeChar(*str, pos) == RET_ERROR) {
+			return RET_ERROR;
+		}
+		str++;
+		pos =+ 6;
+	}
+	return RET_SUCCESS;
+}
+
+uint16_t dispBuffer_ShowTime(uint8_t mins, uint8_t secs, uint8_t colon) {
+	char str_buffer[4];
+	dispBuffer_Clear();
+	// mins
+	string_uint8_to_string_2digits(mins, str_buffer);
+	dispBuffer_AddString(str_buffer);
+	// colon
+	dispBuffer_AddRow(FONT_CHAR_SEPARATOR);
+	if(colon) {
+		dispBuffer_AddRow(font[':'-0x20][2]);
+	}
+	else {
+		dispBuffer_AddRow(FONT_CHAR_SEPARATOR);
+	}
+	dispBuffer_AddRow(FONT_CHAR_SEPARATOR);
+	// secs
+	string_uint8_to_string_2digits(secs, str_buffer);
+	dispBuffer_AddString(str_buffer);
+
+	return RET_SUCCESS;
+}
+
+uint16_t dispBuffer_UpdateTime(uint8_t mins, uint8_t secs, uint8_t colon) {
+	char str_buffer[4];
+	uint16_t pos = 0;
+	//disp_buffer.wr_index = 0;
+	// mins
+	string_uint8_to_string_2digits(mins, str_buffer);
+	dispBuffer_ChangeString(str_buffer, pos);
+	pos += 2*6;
+	// colon
+	dispBuffer_ChangeRow(FONT_CHAR_SEPARATOR, pos);
+	pos++;
+	if(colon) {
+		dispBuffer_ChangeRow(font[':'-0x20][2], pos);
+	}
+	else {
+		dispBuffer_ChangeRow(FONT_CHAR_SEPARATOR, pos);
+	}
+	pos++;
+	dispBuffer_ChangeRow(FONT_CHAR_SEPARATOR, pos);
+	pos++;
+	// secs
+	string_uint8_to_string_2digits(secs, str_buffer);
+	dispBuffer_ChangeString(str_buffer, pos);
+
+	return RET_SUCCESS;
+}

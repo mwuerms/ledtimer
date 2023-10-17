@@ -34,4 +34,6 @@ uint16_t dispBuffer_GetNbFreeRows(void);
 uint16_t dispBuffer_ChangeRow(uint8_t row_data, uint16_t pos);
 uint16_t dispBuffer_ChangeRows(uint8_t *row_data, uint16_t nb_rows, uint16_t pos);
 
+uint16_t dispBuffer_ShowTime(uint8_t mins, uint8_t secs, uint8_t colon);
+
 #endif /* INC_DISPBUFFER_H_ */

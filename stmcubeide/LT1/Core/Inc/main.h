@@ -137,7 +137,7 @@ extern volatile uint32_t global_events;
 
 #define EV_BLINK	BIT(13)
 #define EV_BLINK2	BIT(14)
-#define EV_BUTTON	BIT(15)
+#define EV_BUTTON_PRESSED	BIT(15)
 
 /* USER CODE END Private defines */
 

@@ -133,14 +133,10 @@ int main(void)
 		  else if(copy_gpio_states[GPIO_INDEX_USR_BTN] == GPIO_STATE_BTN_LONG_PRESSED) {
 			  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
 		  }
+		  if(gpio_IsAnyButtonPressed() == TRUE) {
+			  local_events |= EV_BUTTON_PRESSED;
+		  }
 	  }
-	  if(local_events & EV_MAINAPP_TIME) {
-		  mainapp_TimerEvents(EV_MAINAPP_TIME);
-	  }
-	  if(local_events & EV_TIMER1APP_TIME) {
-		  timer1app_TimerEvents(EV_TIMER1APP_TIME);
-	  }
-
 
 	  if(local_events & EV_BLINK) {
 		  lptim_AddSingleEvent(32768/8, EV_BLINK);
@@ -154,6 +150,10 @@ int main(void)
 		  else {
 			  cnt_tim--;
 		  }
+	  }
+
+	  if(local_events) {
+		  mainapp_ProcessEvents(local_events);
 	  }
 
 	  while(1) {

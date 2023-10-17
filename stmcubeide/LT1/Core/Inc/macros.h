@@ -12,6 +12,9 @@
 #define RET_SUCCESS	(0)
 #define RET_ERROR	(1)
 
+#define FALSE	(0)
+#define TRUE	(1)
+
 #define ENTER_ATOMIC_NVIC_IRQn(irqn, restore) do { \
 			restore = NVIC_GetEnableIRQ(irqn); \
 			HAL_NVIC_DisableIRQ(irqn); \
@@ -21,4 +24,5 @@
 			if(restore) \
 				HAL_NVIC_EnableIRQ(irqn); \
 		} while(0)
+
 #endif /* INC_MACROS_H_ */

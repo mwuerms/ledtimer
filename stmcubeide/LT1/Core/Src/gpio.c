@@ -218,12 +218,27 @@ void gpio_PollInputs(void) {
 }
 
 void gpio_GetCopyOfInputStates(uint8_t* copy_states) {
-	uint8_t n;
+	uint32_t n;
 	for(n = 0; n < GPIO_NB_INPUTS; n++) {
 		copy_states[n] = gpio_input_states[n];
 	}
 }
 
+uint32_t gpio_IsAnyButtonPressed(void) {
+	uint32_t n;
+	for(n = 0; n < GPIO_INDEX_BTN_STOP; n++) {
+		if(gpio_input_states[n] == GPIO_STATE_BTN_SHORT_PRESSED) {
+			return TRUE;
+		}
+		if(gpio_input_states[n] == GPIO_STATE_BTN_LONG_PRESSED) {
+			return TRUE;
+		}
+	}
+	if(gpio_input_states[GPIO_INDEX_USR_BTN] == GPIO_STATE_BTN_PRESSED) {
+		return TRUE;
+	}
+	return FALSE;
+}
 
 void gpio_StartPolling(void) {
 	gpio_lptim_nr = lptim_AddRepeatingEvent(LPTIM_PERIODE_2MS, EV_GPIO_POLL);

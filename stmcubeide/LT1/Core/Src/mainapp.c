@@ -6,12 +6,18 @@
  */
 
 #include "mainapp.h"
+#include "timer1app.h"
 #include "gpio.h"
 #include "dispBuffer.h"
 #include "lptim.h"
 
+static enum {
+	mainapp = 0,
+	timer1app
+} mainapp_active_app;
+
 void mainapp_Init(void) {
-	return;
+	mainapp_active_app = mainapp;
 }
 
 void mainapp_Start(void) {
@@ -19,10 +25,23 @@ void mainapp_Start(void) {
 	lptim_AddSingleEvent(LPTIM_PERIODE_1S, EV_MAINAPP_TIME);
 }
 
-void mainapp_ProcessGPIOEvents(uint8_t *gpio_events, uint32_t size) {
-	return;
-}
-
-void mainapp_TimerEvents(uint32_t events) {
-	timer1app_Start();
+void mainapp_ProcessEvents(uint32_t events) {
+	switch(mainapp_active_app) {
+	case mainapp:
+		if(events & EV_MAINAPP_TIME) {
+			static uint16_t delay_cnt = 10;
+			if(delay_cnt == 0) {
+				mainapp_active_app = timer1app;
+				timer1app_Start();
+			}
+			else {
+				delay_cnt--;
+				lptim_AddSingleEvent(LPTIM_PERIODE_1S, EV_MAINAPP_TIME);
+			}
+		}
+		break;
+	case timer1app:
+		timer1app_ProcessEvents(events);
+		break;
+	}
 }
