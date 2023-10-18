@@ -116,6 +116,8 @@ uint16_t dispBuffer_ChangeString(char *str, uint16_t pos) {
 uint16_t dispBuffer_ShowTime(uint8_t mins, uint8_t secs, uint8_t colon) {
 	char str_buffer[4];
 	dispBuffer_Clear();
+	// fill dots
+#warning "FILL DOTS HERE"
 	// mins
 	string_uint8_to_string_2digits(mins, str_buffer);
 	dispBuffer_AddString(str_buffer);

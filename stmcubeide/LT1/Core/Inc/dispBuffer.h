@@ -11,10 +11,6 @@
 // - public ----------------------------------
 #include <stdint.h>
 
-#define DISPLAY_NB_COLUMNS	5 // 1 element only (5*6)
-#define DISPLAY_NB_ROWS	(7)	// 1 byte
-#define DISPLAY_ROW_MASK (0x7F)
-
 #define DISP_BUFFER_SIZE	(32*2)
 typedef struct {
 	uint8_t buffer[DISP_BUFFER_SIZE];

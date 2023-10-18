@@ -5,29 +5,24 @@
  *      Author: Martin
  */
 
-// - private ------------------------------
+// - private ------------------------------------------------------------------------
+
 #include "display.h"
 #include "dispBuffer.h"
 #include "lptim.h"
 
-#warning "__DISPLAY: 1 element only"
+static uint32_t display_lptim_nr = 0;
 
-/*
+static disp_buffer_t *display_buffer;
+static uint32_t display_ctrl;
+#define DISPLAY_CTRL_SCROLL_ON	BIT(0)
+
+#if 1
+#warning "__DISPLAY: 1 element -> 5 columns only"
+
 #define DISPLAY_NB_COLUMNS	5 // 1 element only (5*6)
 #define DISPLAY_NB_ROWS	(7)	// 1 byte
 #define DISPLAY_ROW_MASK (0x7F)
-
-#define DISPLAY_BUFFER_SIZE	(32*2)
-typedef struct {
-	uint8_t buffer[DISPLAY_BUFFER_SIZE];
-	uint8_t wr_index;
-	uint8_t rd_index, rd_origin;
-} display_buffer_t;
-
-static display_buffer_t display_buffer;
-*/
-
-static uint32_t display_lptim_nr = 0;
 
 void display_ShowCol(uint32_t col_nr, uint32_t row_data) {
 	GPIOA->ODR = 0;
@@ -55,12 +50,20 @@ void display_ShowCol(uint32_t col_nr, uint32_t row_data) {
 	}
 	GPIOA->ODR = row_data & DISPLAY_ROW_MASK;
 }
+#else
+#warning "__DISPLAY: 6 elements -> 30 columns"
 
-disp_buffer_t *display_buffer;
+#define DISPLAY_NB_COLUMNS	30 // 6 elements
+#define DISPLAY_NB_ROWS	(7)	// 1 byte
+#define DISPLAY_ROW_MASK (0x7F)
 
-// - public ----------------------------
+#endif
+
+// - public -------------------------------------------------------------------------
+
 void display_Init(void) {
 	display_lptim_nr = 0;
+	display_ctrl = 0;
 
 	dispBuffer_Init();
 	display_buffer = dispBuffer_Get();
@@ -81,14 +84,14 @@ void display_Off(void) {
 }
 
 void display_ScrollingOn(void) {
-	return;
+	display_ctrl |=  DISPLAY_CTRL_SCROLL_ON;
 }
 void display_ScrollingOff(void) {
-	return;
+	display_ctrl &= ~DISPLAY_CTRL_SCROLL_ON;
 }
 
 
-static uint32_t _next(uint32_t rd_origin, uint32_t wr_index, uint32_t col_nr) {
+static uint32_t display_NextRow(uint32_t rd_origin, uint32_t wr_index, uint32_t col_nr) {
 	uint32_t rd_index = rd_origin + col_nr;
 	if(rd_index >= wr_index) {
 		rd_index -= wr_index;
@@ -96,7 +99,11 @@ static uint32_t _next(uint32_t rd_origin, uint32_t wr_index, uint32_t col_nr) {
 	return rd_index;
 }
 
-static uint32_t _scroll(uint32_t rd_origin, uint32_t wr_origin) {
+static uint32_t display_Scroll(uint32_t rd_origin, uint32_t wr_origin) {
+	if((display_ctrl & DISPLAY_CTRL_SCROLL_ON) == 0) {
+		// scroll off, nothing to do
+		return rd_origin;
+	}
 	static uint32_t cnt_scroll = 32768/8/8/10;
 	uint32_t next_rd_origin = rd_origin;
 	if(cnt_scroll == 0) {
@@ -115,9 +122,8 @@ static uint32_t _scroll(uint32_t rd_origin, uint32_t wr_origin) {
 // call in background from timer (LPTIM1)
 void display_Update(void) {
 	static uint32_t col_cnt = 0;
-
-	display_buffer->rd_origin = _scroll(display_buffer->rd_origin, display_buffer->wr_index);
-	display_buffer->rd_index = _next(display_buffer->rd_origin, display_buffer->wr_index, col_cnt);
+	display_buffer->rd_origin = display_Scroll(display_buffer->rd_origin, display_buffer->wr_index);
+	display_buffer->rd_index  = display_NextRow(display_buffer->rd_origin, display_buffer->wr_index, col_cnt);
 
 	display_ShowCol(col_cnt, display_buffer->buffer[display_buffer->rd_index]);
 	col_cnt++;
@@ -126,81 +132,3 @@ void display_Update(void) {
 	}
 }
 
-
-/*
-static void display_ClearDisplayBuffer(void) {
-	for(display_buffer.wr_index = 0; display_buffer.wr_index < DISPLAY_BUFFER_SIZE; display_buffer.wr_index++) {
-		display_buffer.buffer[display_buffer.wr_index] = 0;
-	}
-	display_buffer.wr_index = 0;
-}
-
-static uint32_t display_AddCharToDisplayBuffer(char c) {
-	uint8_t n;
-	if((display_buffer.wr_index + 6) >= DISPLAY_BUFFER_SIZE)
-		return RET_ERROR;
-	for(n = 0; n < 5; n++) {
-		display_buffer.buffer[display_buffer.wr_index++] = font[c-0x20][n];
-	}
-	display_buffer.buffer[display_buffer.wr_index++] = FONT_CHAR_SEPARATOR;
-	return RET_SUCCESS;
-}
-
-void display_ShowString(char *str) {
-	display_ClearDisplayBuffer();
-	while(*str != 0) {
-		if(display_AddCharToDisplayBuffer(*str) == RET_ERROR) {
-			break;
-		}
-		str++;
-	}
-}
-
-void display_ShowBuffer(uint8_t *data, uint32_t len) {
-	if(len == 0) {
-		// error, nothing to show, do not change display_buffer
-		return;
-	}
-	display_ClearDisplayBuffer();
-	for(display_buffer.wr_index = 0; display_buffer.wr_index < DISPLAY_BUFFER_SIZE; display_buffer.wr_index++) {
-		display_buffer.buffer[display_buffer.wr_index] = data[display_buffer.wr_index];
-		len--;
-		if(len == 0) {
-			break;
-		}
-	}
-}
-
-/ *void display_UpdateBuffer(uint8_t *data, uint32_t len, uint32_t pos) {
-	if(len == 0) {
-		// error, nothing to show, do not change display_buffer
-		return;
-	}
-	if(pos >= DISPLAY_BUFFER_SIZE) {
-		// error, outside buffer size
-		return;
-	}
-}* /
-
-void display_ShowTime(uint8_t mins, uint8_t secs) {
-	uint8_t tens;
-	display_ClearDisplayBuffer();
-	tens = mins/10;
-	display_AddCharToDisplayBuffer(tens+'0');
-	display_AddCharToDisplayBuffer(mins-(tens*10)+'0');
-
-	display_buffer.buffer[display_buffer.wr_index++] = font[':'-0x20][2];
-
-	tens = secs/10;
-	display_AddCharToDisplayBuffer(tens+'0');
-	display_AddCharToDisplayBuffer(secs-(tens*10)+'0');
-}
-
-void display_UpdateTime(uint8_t mins, uint8_t secs) {
-
-}
-
-void display_UpdateTimeSeparator(uint8_t show) {
-
-}
-*/
