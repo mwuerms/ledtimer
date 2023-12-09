@@ -113,40 +113,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  if(local_events & EV_WAKEUP) {
-		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
-	  }
 	  if(local_events & EV_DISPLAY_UPDATE) {
 		  display_Update();
 	  }
 	  if(local_events & EV_GPIO_POLL) {
 		  gpio_PollInputs();
 		  gpio_GetCopyOfInputStates(copy_gpio_states);
-		  if(copy_gpio_states[GPIO_INDEX_USR_BTN] == GPIO_STATE_BTN_RELEASED) {
-			  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-		  }
-		  else if(copy_gpio_states[GPIO_INDEX_USR_BTN] == GPIO_STATE_BTN_SHORT_PRESSED) { // short works
-			  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-		  }
-		  else if(copy_gpio_states[GPIO_INDEX_USR_BTN] == GPIO_STATE_BTN_LONG_PRESSED) {
-			  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
-		  }
 		  if(gpio_IsAnyButtonPressed() == TRUE) {
 			  local_events |= EV_BUTTON_PRESSED;
-		  }
-	  }
-
-	  if(local_events & EV_BLINK) {
-		  lptim_AddSingleEvent(32768/8, EV_BLINK);
-		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
-	  }
-	  if(local_events & EV_BLINK2) {
-		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
-		  if(cnt_tim == 0) {
-			  lptim_RemoveEvent(tim_nr);
-		  }
-		  else {
-			  cnt_tim--;
 		  }
 	  }
 

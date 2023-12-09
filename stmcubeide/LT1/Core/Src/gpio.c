@@ -215,6 +215,37 @@ void gpio_PollInputs(void) {
 		gpio_input_value_cnt[GPIO_INDEX_USR_BTN]--;
 	}
 
+	// eval inputs
+	for(n = 0; n < GPIO_INDEX_USB_STAT; n++) {
+		switch(gpio_input_states[n]) {
+		case GPIO_STATE_BTN_RELEASED:
+			if(gpio_input_values[n] == 0xF0) {
+				// 1st button press
+				gpio_input_states[n] = GPIO_STATE_BTN_SHORT_PRESSED;
+			}
+			break;
+		case GPIO_STATE_BTN_SHORT_PRESSED:
+		case GPIO_STATE_BTN_LONG_PRESSED:
+			gpio_input_states[n] = GPIO_STATE_BTN_PRESSED;
+			gpio_input_value_cnt[n] = 250;
+			break;
+		case GPIO_STATE_BTN_PRESSED:
+			if((gpio_input_values[n] & 0x0F) == 0x0F) {
+				// button was released
+				gpio_input_states[n] = GPIO_STATE_BTN_RELEASED;
+			}
+			else {
+				// still pressed
+				if(gpio_input_value_cnt[n] == 0) {
+					gpio_input_states[n] = GPIO_STATE_BTN_LONG_PRESSED;
+				}
+				else {
+					gpio_input_value_cnt[n]--;
+				}
+			}
+			break;
+		}
+	}
 }
 
 void gpio_GetCopyOfInputStates(uint8_t* copy_states) {
@@ -241,6 +272,11 @@ uint32_t gpio_IsAnyButtonPressed(void) {
 }
 
 void gpio_StartPolling(void) {
+	uint32_t n;
+	for(n = 0; n < GPIO_NB_INPUTS; n++) {
+		gpio_input_values[n] = 0xFF;
+		gpio_input_states[n] = GPIO_STATE_BTN_RELEASED;
+	}
 	gpio_lptim_nr = lptim_AddRepeatingEvent(LPTIM_PERIODE_2MS, EV_GPIO_POLL);
 }
 
