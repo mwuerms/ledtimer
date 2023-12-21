@@ -67,7 +67,6 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	static uint32_t local_events;
-	uint8_t copy_gpio_states[GPIO_NB_INPUTS];
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -89,6 +88,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_LPTIM1_Init();
+  MX_LPTIM2_Init();
   /* USER CODE BEGIN 2 */
   display_Init();
   lptim_Start();
@@ -118,8 +118,7 @@ int main(void)
 	  }
 	  if(local_events & EV_GPIO_POLL) {
 		  gpio_PollInputs();
-		  gpio_GetCopyOfInputStates(copy_gpio_states);
-		  if(gpio_IsAnyButtonPressed() == TRUE) {
+		  if(gpio_hasAnyButtonChanged() == TRUE) {
 			  local_events |= EV_BUTTON_PRESSED;
 		  }
 	  }
@@ -134,6 +133,7 @@ int main(void)
 		  local_events = global_events;
 		  global_events = 0;
 		  if(local_events) {
+			  __enable_irq();
 			  break;
 		  }
 
@@ -179,7 +179,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV8;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 

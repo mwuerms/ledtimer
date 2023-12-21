@@ -68,6 +68,7 @@ void gpio_PollInputs(void);
 
 void gpio_GetCopyOfInputStates(uint8_t* copy_states);
 uint32_t gpio_IsAnyButtonPressed(void);
+uint32_t gpio_hasAnyButtonChanged(void);
 
 void gpio_StartPolling(void);
 void gpio_StopPolling(void);

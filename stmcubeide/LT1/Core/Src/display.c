@@ -39,6 +39,11 @@ static uint32_t display_ctrl;
 #define ShiftRegister_SER_Clr()	HAL_GPIO_WritePin(DISP_COL_SER_GPIO_Port, DISP_COL_SER_Pin, GPIO_PIN_RESET);
 
 void display_ShowCol(uint32_t col_nr, uint32_t row_data) {
+	// measure timing, gpio speed: ca. 2 us set, clr
+	// #define DISPLAY_ROW_MASK (0x3F)//(0x7F)
+	// HAL_GPIO_WritePin(DISP_ROW6_GPIO_Port, DISP_ROW6_Pin, GPIO_PIN_SET);
+	// HAL_GPIO_WritePin(DISP_ROW6_GPIO_Port, DISP_ROW6_Pin, GPIO_PIN_RESET);
+
 	ShiftRegister_Output_disable();
 	GPIOA->ODR &= ~DISPLAY_ROW_MASK;
 
@@ -60,6 +65,9 @@ void display_ShowCol(uint32_t col_nr, uint32_t row_data) {
 
 	GPIOA->ODR |= row_data & DISPLAY_ROW_MASK;
 	ShiftRegister_Output_enable();
+
+	// HAL_GPIO_WritePin(DISP_ROW6_GPIO_Port, DISP_ROW6_Pin, GPIO_PIN_SET);
+	// HAL_GPIO_WritePin(DISP_ROW6_GPIO_Port, DISP_ROW6_Pin, GPIO_PIN_RESET);
 }
 
 // - public -------------------------------------------------------------------------
@@ -78,20 +86,22 @@ void display_Init(void) {
 	// gpios: see gpio.c
 
 	// testing display
-	//uint8_t test_data[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
-	//dispBuffer_AddRows(test_data, sizeof(test_data));
+	uint8_t test_data[] =  {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x04, 0x08, 0x04, 0x02, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x20, 0x10, 0x08, 0x14, 0x22, 0x41, 0x08, 0x08, 0x07, 0x0F, 0x7F};
+	//uint8_t test_data[] =  {0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x20, 0x10, 0x08, 0x14, 0x22, 0x41, 0x08, 0x08, 0x00, 0x09};
+	dispBuffer_AddRows(test_data, sizeof(test_data));
 }
 
 void display_On(void) {
 	//lptim_StartDisplayUpdate();
 	//lptim_AddRepeatingEvent(10, EV_DISPLAY_UPDATE);
-	lptim_AddRepeatingEvent(1, EV_DISPLAY_UPDATE);
+	//lptim_AddRepeatingEvent(1, EV_DISPLAY_UPDATE);
+	lptim2_StartRepeating(EV_DISPLAY_UPDATE);
 	return;
 }
 
 void display_Off(void) {
 	//lptim_StopDisplayUpdate();
-	lptim_RemoveEvent(display_lptim_nr);
+	//lptim_RemoveEvent(display_lptim_nr);
 	return;
 }
 

@@ -47,6 +47,7 @@ uint8_t corr_wr_index[] = {
 	59, 58, 57, 56, 55,
 	64, 63, 62, 61, 60,
 };
+
 uint16_t dispBuffer_AddRow(uint8_t row_data) {
 	if((disp_buffer.wr_index + 1) >= DISP_BUFFER_SIZE)
 			return RET_ERROR;
@@ -109,7 +110,22 @@ uint16_t dispBuffer_ChangeRow(uint8_t row_data, uint16_t pos) {
 	if(pos >= disp_buffer.wr_index) {
 		return RET_ERROR;
 	}
-	disp_buffer.buffer[pos] = row_data;
+	// bugfix, 2023-12-12, ME: order row0 ... row6 is inverted -> fix: re-arange data
+	uint8_t n, temp;
+	temp = row_data;
+	row_data = 0;
+	for(n = 7; n; n--) {
+		row_data <<= 1;
+		row_data |= (temp & 0x01);
+		temp >>= 1;
+	}
+
+	// bugfix, 2023-12-13, ME: order col0 ... col4 is also inverted ->
+	// datasheet did not specify the correct order, I tried beforehand, but got it mixed up anyway ... such things happen :-)
+	// not this simple way ,-( disp_buffer.buffer[disp_buffer.wr_index++] = row_data;
+	// not this simple way either :-( disp_buffer.buffer[pos] = row_data;
+	uint8_t cwr_index = corr_wr_index[pos];
+	disp_buffer.buffer[cwr_index] = row_data;
 	return RET_SUCCESS;
 }
 

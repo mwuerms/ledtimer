@@ -34,11 +34,14 @@ extern "C" {
 
 extern LPTIM_HandleTypeDef hlptim1;
 
+extern LPTIM_HandleTypeDef hlptim2;
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
 void MX_LPTIM1_Init(void);
+void MX_LPTIM2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 #define LPTIM_SOURCE_CLK (32768UL)
@@ -57,6 +60,8 @@ uint32_t lptim_AddSingleEvent(uint32_t periode, uint32_t event);
 uint32_t lptim_AddRepeatingEvent(uint32_t periode, uint32_t event);
 uint32_t lptim_RemoveEvent(uint32_t lptim_event_nr);
 
+uint32_t lptim2_StartRepeating(uint32_t event);
+uint32_t lptim2_Stop(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

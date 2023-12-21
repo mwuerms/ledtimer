@@ -141,24 +141,12 @@ void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-  gpio_lptim_nr = 0;
-
-
-	#warning "_DISPLAY GPIOC"
-	/*Configure GPIO pins : PBPin PBPin */
-	GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_3|GPIO_PIN_2|GPIO_PIN_1|GPIO_PIN_0;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-	GPIO_InitStruct.Pin = SW4_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
 /* USER CODE BEGIN 2 */
 
 static uint8_t gpio_input_states[GPIO_NB_INPUTS];		// store GPIO_STATE_RELEASED, GPIO_STATE_SHORT_PRESSED, GPIO_STATE_LONG_PRESSED
+static uint8_t gpio_input_states_old[GPIO_NB_INPUTS];	// store the old gpio_input_states to check for any change
 static uint8_t gpio_input_values[GPIO_NB_INPUTS];
 static uint8_t gpio_input_states_buffer[GPIO_NB_INPUTS]; // store all the HAL_GPIO_ReadPin()
 static uint8_t gpio_input_value_cnt[GPIO_NB_INPUTS];	// count when it is pressed or low
@@ -257,7 +245,7 @@ void gpio_GetCopyOfInputStates(uint8_t* copy_states) {
 
 uint32_t gpio_IsAnyButtonPressed(void) {
 	uint32_t n;
-	for(n = 0; n < GPIO_INDEX_BTN_STOP; n++) {
+	for(n = 0; n <= GPIO_INDEX_BTN_STOP; n++) {
 		if(gpio_input_states[n] == GPIO_STATE_BTN_SHORT_PRESSED) {
 			return TRUE;
 		}
@@ -271,11 +259,30 @@ uint32_t gpio_IsAnyButtonPressed(void) {
 	return FALSE;
 }
 
+uint32_t gpio_hasAnyButtonChanged(void) {
+	uint32_t n;
+	uint32_t cnt_change = 0;
+	// check states for any change, also copy to old states
+	for(n = 0; n <= GPIO_INDEX_BTN_STOP; n++) {
+		if(gpio_input_states[n] != gpio_input_states_old[n]) {
+			// change detected
+			cnt_change++;
+		}
+		gpio_input_states_old[n] = gpio_input_states[n];
+	}
+	if(cnt_change == 0) {
+		// no change detected
+		return FALSE;
+	}
+	return TRUE;
+}
+
 void gpio_StartPolling(void) {
 	uint32_t n;
 	for(n = 0; n < GPIO_NB_INPUTS; n++) {
 		gpio_input_values[n] = 0xFF;
 		gpio_input_states[n] = GPIO_STATE_BTN_RELEASED;
+		gpio_input_states_old[n] = GPIO_STATE_BTN_RELEASED;
 	}
 	gpio_lptim_nr = lptim_AddRepeatingEvent(LPTIM_PERIODE_2MS, EV_GPIO_POLL);
 }
