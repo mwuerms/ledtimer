@@ -11,8 +11,6 @@
 #include "dispBuffer.h"
 #include "lptim.h"
 
-static uint32_t display_lptim_nr = 0;
-
 static disp_buffer_t *display_buffer;
 static uint32_t display_ctrl;
 #define DISPLAY_CTRL_SCROLL_ON	BIT(0)
@@ -73,7 +71,6 @@ void display_ShowCol(uint32_t col_nr, uint32_t row_data) {
 // - public -------------------------------------------------------------------------
 
 void display_Init(void) {
-	display_lptim_nr = 0;
 	display_ctrl = 0;
 
 	ShiftRegister_Output_disable();
@@ -87,22 +84,15 @@ void display_Init(void) {
 
 	// testing display
 	uint8_t test_data[] =  {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x04, 0x08, 0x04, 0x02, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x20, 0x10, 0x08, 0x14, 0x22, 0x41, 0x08, 0x08, 0x07, 0x0F, 0x7F};
-	//uint8_t test_data[] =  {0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x20, 0x10, 0x08, 0x14, 0x22, 0x41, 0x08, 0x08, 0x00, 0x09};
 	dispBuffer_AddRows(test_data, sizeof(test_data));
 }
 
 void display_On(void) {
-	//lptim_StartDisplayUpdate();
-	//lptim_AddRepeatingEvent(10, EV_DISPLAY_UPDATE);
-	//lptim_AddRepeatingEvent(1, EV_DISPLAY_UPDATE);
-	lptim2_StartRepeating(EV_DISPLAY_UPDATE);
-	return;
+	lptim_StartDisplayUpdate();
 }
 
 void display_Off(void) {
-	//lptim_StopDisplayUpdate();
-	//lptim_RemoveEvent(display_lptim_nr);
-	return;
+	lptim_StopDisplayUpdate();
 }
 
 void display_ScrollingOn(void) {
@@ -115,9 +105,6 @@ void display_ScrollingOff(void) {
 
 static uint32_t display_NextRow(uint32_t rd_origin, uint32_t wr_index, uint32_t col_nr) {
 	uint32_t rd_index = rd_origin + col_nr;
-	/*if(rd_index >= wr_index) {
-		rd_index -= wr_index;
-	}*/
 	if(rd_index >= DISPLAY_NB_COLUMNS) {
 		rd_index -= DISPLAY_NB_COLUMNS;
 	}

@@ -60,6 +60,9 @@ uint32_t lptim_AddSingleEvent(uint32_t periode, uint32_t event);
 uint32_t lptim_AddRepeatingEvent(uint32_t periode, uint32_t event);
 uint32_t lptim_RemoveEvent(uint32_t lptim_event_nr);
 
+void lptim_StartDisplayUpdate(void);
+void lptim_StopDisplayUpdate(void);
+
 uint32_t lptim2_StartRepeating(uint32_t event);
 uint32_t lptim2_Stop(void);
 /* USER CODE END Prototypes */

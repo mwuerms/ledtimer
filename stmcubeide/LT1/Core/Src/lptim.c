@@ -311,14 +311,15 @@ uint32_t lptim_RemoveEvent(uint32_t lptim_event_nr) {
 	return RET_SUCCESS;
 }
 
+static uint32_t lptim_display_nr = 0;
 void lptim_StartDisplayUpdate(void) {
 	// ATOMIC
 	uint32_t restore_irq;
 	ENTER_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
 
+	lptim_display_nr = lptim_AddRepeatingEvent(1, EV_DISPLAY_UPDATE);
 
 	LEAVE_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
-	return RET_SUCCESS;
 }
 
 void lptim_StopDisplayUpdate(void) {
@@ -326,9 +327,9 @@ void lptim_StopDisplayUpdate(void) {
 	uint32_t restore_irq;
 	ENTER_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
 
+	lptim_RemoveEvent(lptim_display_nr);
 
 	LEAVE_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
-	return RET_SUCCESS;
 }
 
 uint32_t lptim2_StartRepeating(uint32_t event) {
