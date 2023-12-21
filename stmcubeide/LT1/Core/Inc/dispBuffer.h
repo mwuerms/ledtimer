@@ -21,14 +21,14 @@ typedef struct {
 void dispBuffer_Init(void);
 disp_buffer_t *dispBuffer_Get(void);
 uint16_t dispBuffer_Clear(void);
-uint16_t dispBuffer_AddRow(uint8_t row_data);
-uint16_t dispBuffer_AddRows(uint8_t *row_data, uint16_t nb_rows);
-uint16_t dispBuffer_ShowRows(uint8_t *row_data, uint16_t nb_rows);
+uint16_t dispBuffer_AddColumn(uint8_t col_data);
+uint16_t dispBuffer_AddColumns(uint8_t *col_data, uint16_t nb_col);
+uint16_t dispBuffer_ShowColumns(uint8_t *col_data, uint16_t nb_col);
 uint16_t dispBuffer_AddChar(char c);
 uint16_t dispBuffer_AddString(char *str);
-uint16_t dispBuffer_GetNbFreeRows(void);
-uint16_t dispBuffer_ChangeRow(uint8_t row_data, uint16_t pos);
-uint16_t dispBuffer_ChangeRows(uint8_t *row_data, uint16_t nb_rows, uint16_t pos);
+uint16_t dispBuffer_GetNbFreeColumns(void);
+uint16_t dispBuffer_ChangeRow(uint8_t col_data, uint16_t pos);
+uint16_t dispBuffer_ChangeRows(uint8_t *col_data, uint16_t nb_col, uint16_t pos);
 
 uint16_t dispBuffer_ShowTime(uint8_t mins, uint8_t secs, uint8_t colon);
 

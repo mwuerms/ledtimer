@@ -48,16 +48,16 @@ uint8_t corr_wr_index[] = {
 	64, 63, 62, 61, 60,
 };
 
-uint16_t dispBuffer_AddRow(uint8_t row_data) {
+uint16_t dispBuffer_AddColumn(uint8_t col_data) {
 	if((disp_buffer.wr_index + 1) >= DISP_BUFFER_SIZE)
 			return RET_ERROR;
 	// bugfix, 2023-12-12, ME: order row0 ... row6 is inverted -> fix: re-arange data
 	uint8_t n, temp;
-	temp = row_data;
-	row_data = 0;
+	temp = col_data;
+	col_data = 0;
 	for(n = 7; n; n--) {
-		row_data <<= 1;
-		row_data |= (temp & 0x01);
+		col_data <<= 1;
+		col_data |= (temp & 0x01);
 		temp >>= 1;
 	}
 
@@ -65,30 +65,40 @@ uint16_t dispBuffer_AddRow(uint8_t row_data) {
 	// datasheet did not specify the correct order, I tried beforehand, but got it mixed up anyway ... such things happen :-)
 	// not this simple way ,-( disp_buffer.buffer[disp_buffer.wr_index++] = row_data;
 	uint8_t cwr_index = corr_wr_index[disp_buffer.wr_index++];
-	disp_buffer.buffer[cwr_index] = row_data;
+	disp_buffer.buffer[cwr_index] = col_data;
 	return RET_SUCCESS;
 }
 
-uint16_t dispBuffer_AddRows(uint8_t *row_data, uint16_t nb_rows) {
+uint16_t dispBuffer_AddColumns(uint8_t *col_data, uint16_t nb_cols) {
 	uint16_t n = 0;
-	for(n = 0; n < nb_rows; n++) {
-		if(dispBuffer_AddRow(row_data[n]) == RET_ERROR) {
+	for(n = 0; n < nb_cols; n++) {
+		if(dispBuffer_AddColumn(col_data[n]) == RET_ERROR) {
 			return RET_ERROR;
 		}
 	}
 	return RET_SUCCESS;
 }
 
-uint16_t dispBuffer_ShowRows(uint8_t *row_data, uint16_t nb_rows) {
+uint16_t dispBuffer_AddEmptyColumns(uint16_t nb_empty_columns) {
+	uint16_t n = 0;
+	for(n = 0; n < nb_empty_columns; n++) {
+		if(dispBuffer_AddColumn(0x00) == RET_ERROR) {
+			return RET_ERROR;
+		}
+	}
+	return RET_SUCCESS;
+}
+
+uint16_t dispBuffer_ShowColumns(uint8_t *col_data, uint16_t nb_cols) {
 	dispBuffer_Clear();
-	return dispBuffer_AddRows(row_data, nb_rows);
+	return dispBuffer_AddColumns(col_data, nb_cols);
 }
 
 uint16_t dispBuffer_AddChar(char c) {
 	if((disp_buffer.wr_index + 6) >= DISP_BUFFER_SIZE)
 		return RET_ERROR;
-	dispBuffer_AddRows((uint8_t *)(font[c-0x20]), 5);
-	dispBuffer_AddRow(FONT_CHAR_SEPARATOR);
+	dispBuffer_AddColumns((uint8_t *)(font[c-0x20]), 5);
+	dispBuffer_AddColumn(FONT_CHAR_SEPARATOR);
 	return RET_SUCCESS;
 }
 
@@ -102,11 +112,11 @@ uint16_t dispBuffer_AddString(char *str) {
 	return RET_SUCCESS;
 }
 
-uint16_t dispBuffer_GetNbFreeRows(void) {
+uint16_t dispBuffer_GetNbFreeColumns(void) {
 	return DISP_BUFFER_SIZE - disp_buffer.wr_index;
 }
 
-uint16_t dispBuffer_ChangeRow(uint8_t row_data, uint16_t pos) {
+uint16_t dispBuffer_ChangeColumn(uint8_t row_data, uint16_t pos) {
 	if(pos >= disp_buffer.wr_index) {
 		return RET_ERROR;
 	}
@@ -129,10 +139,10 @@ uint16_t dispBuffer_ChangeRow(uint8_t row_data, uint16_t pos) {
 	return RET_SUCCESS;
 }
 
-uint16_t dispBuffer_ChangeRows(uint8_t *row_data, uint16_t nb_rows, uint16_t pos) {
+uint16_t dispBuffer_ChangeColumns(uint8_t *row_data, uint16_t nb_rows, uint16_t pos) {
 	uint16_t n = 0;
 	for(n = 0; n < nb_rows; n++, pos++) {
-		if(dispBuffer_ChangeRow(row_data[n], pos) == RET_ERROR) {
+		if(dispBuffer_ChangeColumn(row_data[n], pos) == RET_ERROR) {
 			return RET_ERROR;
 		}
 	}
@@ -142,8 +152,8 @@ uint16_t dispBuffer_ChangeRows(uint8_t *row_data, uint16_t nb_rows, uint16_t pos
 uint16_t dispBuffer_ChangeChar(char c, uint16_t pos) {
 	if((pos + 6) >= DISP_BUFFER_SIZE)
 		return RET_ERROR;
-	dispBuffer_ChangeRows((uint8_t *)(font[c-0x20]), 5, pos);
-	dispBuffer_ChangeRow(FONT_CHAR_SEPARATOR, pos+5);
+	dispBuffer_ChangeColumns((uint8_t *)(font[c-0x20]), 5, pos);
+	dispBuffer_ChangeColumn(FONT_CHAR_SEPARATOR, pos+5);
 	return RET_SUCCESS;
 }
 
@@ -153,7 +163,7 @@ uint16_t dispBuffer_ChangeString(char *str, uint16_t pos) {
 			return RET_ERROR;
 		}
 		str++;
-		pos =+ 6;
+		pos += 6;
 	}
 	return RET_SUCCESS;
 }
@@ -165,16 +175,17 @@ uint16_t dispBuffer_ShowTime(uint8_t mins, uint8_t secs, uint8_t colon) {
 #warning "FILL DOTS HERE"
 	// mins
 	string_uint8_to_string_2digits(mins, str_buffer);
+	dispBuffer_AddEmptyColumns(5);
 	dispBuffer_AddString(str_buffer);
 	// colon
-	dispBuffer_AddRow(FONT_CHAR_SEPARATOR);
+	//dispBuffer_AddColumn(FONT_CHAR_SEPARATOR);
 	if(colon) {
-		dispBuffer_AddRow(font[':'-0x20][2]);
+		dispBuffer_AddColumn(font[':'-0x20][2]);
 	}
 	else {
-		dispBuffer_AddRow(FONT_CHAR_SEPARATOR);
+		dispBuffer_AddColumn(FONT_CHAR_SEPARATOR);
 	}
-	dispBuffer_AddRow(FONT_CHAR_SEPARATOR);
+	dispBuffer_AddColumn(FONT_CHAR_SEPARATOR);
 	// secs
 	string_uint8_to_string_2digits(secs, str_buffer);
 	dispBuffer_AddString(str_buffer);
@@ -188,19 +199,22 @@ uint16_t dispBuffer_UpdateTime(uint8_t mins, uint8_t secs, uint8_t colon) {
 	//disp_buffer.wr_index = 0;
 	// mins
 	string_uint8_to_string_2digits(mins, str_buffer);
+	//dispBuffer_AddEmptyColumns(5);
+	pos = 5;
 	dispBuffer_ChangeString(str_buffer, pos);
 	pos += 2*6;
 	// colon
-	dispBuffer_ChangeRow(FONT_CHAR_SEPARATOR, pos);
-	pos++;
+	//dispBuffer_ChangeColumn(FONT_CHAR_SEPARATOR, pos);
+	//pos++;
 	if(colon) {
-		dispBuffer_ChangeRow(font[':'-0x20][2], pos);
+		dispBuffer_ChangeColumn(font[':'-0x20][2], pos);
+		pos++;
 	}
 	else {
-		dispBuffer_ChangeRow(FONT_CHAR_SEPARATOR, pos);
+		dispBuffer_ChangeColumn(FONT_CHAR_SEPARATOR, pos);
+		pos++;
 	}
-	pos++;
-	dispBuffer_ChangeRow(FONT_CHAR_SEPARATOR, pos);
+	dispBuffer_ChangeColumn(FONT_CHAR_SEPARATOR, pos);
 	pos++;
 	// secs
 	string_uint8_to_string_2digits(secs, str_buffer);

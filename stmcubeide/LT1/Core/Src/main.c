@@ -88,7 +88,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_LPTIM1_Init();
-  MX_LPTIM2_Init();
   /* USER CODE BEGIN 2 */
   display_Init();
   lptim_Start();

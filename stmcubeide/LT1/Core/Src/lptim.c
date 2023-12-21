@@ -30,7 +30,6 @@
 /* USER CODE END 0 */
 
 LPTIM_HandleTypeDef hlptim1;
-LPTIM_HandleTypeDef hlptim2;
 
 /* LPTIM1 init function */
 void MX_LPTIM1_Init(void)
@@ -60,36 +59,6 @@ void MX_LPTIM1_Init(void)
   /* USER CODE BEGIN LPTIM1_Init 2 */
 
   /* USER CODE END LPTIM1_Init 2 */
-
-}
-/* LPTIM2 init function */
-void MX_LPTIM2_Init(void)
-{
-
-  /* USER CODE BEGIN LPTIM2_Init 0 */
-
-  /* USER CODE END LPTIM2_Init 0 */
-
-  /* USER CODE BEGIN LPTIM2_Init 1 */
-
-  /* USER CODE END LPTIM2_Init 1 */
-  hlptim2.Instance = LPTIM2;
-  hlptim2.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
-  hlptim2.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV1;
-  hlptim2.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
-  hlptim2.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
-  hlptim2.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
-  hlptim2.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
-  hlptim2.Init.Input1Source = LPTIM_INPUT1SOURCE_GPIO;
-  hlptim2.Init.Input2Source = LPTIM_INPUT2SOURCE_GPIO;
-  hlptim2.Init.RepetitionCounter = 0;
-  if (HAL_LPTIM_Init(&hlptim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN LPTIM2_Init 2 */
-
-  /* USER CODE END LPTIM2_Init 2 */
 
 }
 
@@ -122,31 +91,6 @@ void HAL_LPTIM_MspInit(LPTIM_HandleTypeDef* lptimHandle)
 
   /* USER CODE END LPTIM1_MspInit 1 */
   }
-  else if(lptimHandle->Instance==LPTIM2)
-  {
-  /* USER CODE BEGIN LPTIM2_MspInit 0 */
-
-  /* USER CODE END LPTIM2_MspInit 0 */
-
-  /** Initializes the peripherals clock
-  */
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_LPTIM2;
-    PeriphClkInit.Lptim2ClockSelection = RCC_LPTIM2CLKSOURCE_PCLK;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
-    /* LPTIM2 clock enable */
-    __HAL_RCC_LPTIM2_CLK_ENABLE();
-
-    /* LPTIM2 interrupt Init */
-    HAL_NVIC_SetPriority(LPTIM2_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(LPTIM2_IRQn);
-  /* USER CODE BEGIN LPTIM2_MspInit 1 */
-
-  /* USER CODE END LPTIM2_MspInit 1 */
-  }
 }
 
 void HAL_LPTIM_MspDeInit(LPTIM_HandleTypeDef* lptimHandle)
@@ -165,20 +109,6 @@ void HAL_LPTIM_MspDeInit(LPTIM_HandleTypeDef* lptimHandle)
   /* USER CODE BEGIN LPTIM1_MspDeInit 1 */
 
   /* USER CODE END LPTIM1_MspDeInit 1 */
-  }
-  else if(lptimHandle->Instance==LPTIM2)
-  {
-  /* USER CODE BEGIN LPTIM2_MspDeInit 0 */
-
-  /* USER CODE END LPTIM2_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_LPTIM2_CLK_DISABLE();
-
-    /* LPTIM2 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(LPTIM2_IRQn);
-  /* USER CODE BEGIN LPTIM2_MspDeInit 1 */
-
-  /* USER CODE END LPTIM2_MspDeInit 1 */
   }
 }
 
@@ -330,25 +260,6 @@ void lptim_StopDisplayUpdate(void) {
 	lptim_RemoveEvent(lptim_display_nr);
 
 	LEAVE_ATOMIC_NVIC_IRQn(LPTIM1_IRQn, restore_irq);
-}
-
-uint32_t lptim2_StartRepeating(uint32_t event) {
-	lptim2_event = event;
-	/* 2 MHz: 0.5 us
-	 * 200: 438 us   (row5)
-	 * 2000: 1000 us (row5): this is more like it
-	 * 20000: 10 ms  (row5)
-	 */
-	/* 16 MHz: 62.5 ns = 0.0625 us
-	 * 10666 = 0.66 us = 1500 Hz = 50 Hz * 30 (row5), measured 650 us: OK
-	 * 20000 = 1.25 ms (row5), measured: 1.23 ms: OK
-	 */
-	HAL_LPTIM_Counter_Start_IT(&hlptim2, 10666);
-	return RET_SUCCESS;
-}
-
-uint32_t lptim2_Stop(void) {
-	HAL_LPTIM_Counter_Stop_IT(&hlptim2);
 }
 
 /* USER CODE END 1 */
