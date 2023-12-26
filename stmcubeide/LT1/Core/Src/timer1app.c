@@ -74,13 +74,15 @@ static uint8_t _inc_1_max(uint8_t x, uint8_t max1) {
 static uint8_t gpio_states[GPIO_NB_INPUTS];
 void timer1app_ProcessEvents(uint32_t events) {
 	gpio_GetCopyOfInputStates(gpio_states);
+
 	switch(timer1app_state) {
+	// ------------------------------------------------------------------------------
 	case welcome:
 		if(events & EV_TIMER1APP_TIME) {
 			if(timer1app_welcome_cnt == 0) {
 				timer1app_state = set_time;
 				timer1app_time.secs_total = 0;
-				timer1app_time.mins = 11;
+				timer1app_time.mins = 00;
 				timer1app_time.secs = 11;
 				timer1app_time.colon = 1;
 				timer1app_time.fill_dots = 0;
@@ -102,6 +104,8 @@ void timer1app_ProcessEvents(uint32_t events) {
 			dispBuffer_ShowTime(timer1app_time.mins, timer1app_time.secs, timer1app_time.colon);
 		}
 		break;
+
+	// ------------------------------------------------------------------------------
 	case set_time:
 		if(events & EV_BUTTON_PRESSED) {
 			if( (gpio_states[GPIO_INDEX_BTN_UP0] == GPIO_STATE_BTN_SHORT_PRESSED) ||
@@ -143,6 +147,8 @@ void timer1app_ProcessEvents(uint32_t events) {
 			dispBuffer_UpdateTime(timer1app_time.mins, timer1app_time.secs, timer1app_time.colon);
 		}
 		break;
+
+	// ------------------------------------------------------------------------------
 	case count_down_time:
 		if(events & EV_TIMER1APP_TIME) {
 			if(timer1app_time.colon == 0) {
@@ -155,6 +161,11 @@ void timer1app_ProcessEvents(uint32_t events) {
 						// time is up!
 						timer1app_time.mins = 0;
 						timer1app_time.secs = 0;
+						timer1app_time.secs_total = 10;
+
+						timer1app_state = alarm;
+						dispBuffer_Clear();
+						dispBuffer_AddString("ALARM");
 					}
 					else {
 						timer1app_time.mins--;
@@ -169,11 +180,56 @@ void timer1app_ProcessEvents(uint32_t events) {
 			}
 			dispBuffer_UpdateTime(timer1app_time.mins, timer1app_time.secs, timer1app_time.colon);
 		}
+		if(events & EV_BUTTON_PRESSED) {
+			if(gpio_states[GPIO_INDEX_BTN_PLAY] == GPIO_STATE_BTN_SHORT_PRESSED) {
+				timer1app_state = pause;
+				lptim_RemoveEvent(timer1app_timer_nr);
+			}
+			if(gpio_states[GPIO_INDEX_BTN_STOP] == GPIO_STATE_BTN_LONG_PRESSED) {
+				lptim_RemoveEvent(timer1app_timer_nr);
+				timer1app_Start();
+			}
+		}
 		break;
+
+	// ------------------------------------------------------------------------------
 	case pause:
+		if(events & EV_BUTTON_PRESSED) {
+			if(gpio_states[GPIO_INDEX_BTN_PLAY] == GPIO_STATE_BTN_SHORT_PRESSED) {
+				timer1app_state = count_down_time;
+				timer1app_timer_nr = lptim_AddRepeatingEvent(LPTIM_PERIODE_0_5S, EV_TIMER1APP_TIME);
+			}
+			if(gpio_states[GPIO_INDEX_BTN_STOP] == GPIO_STATE_BTN_LONG_PRESSED) {
+				lptim_RemoveEvent(timer1app_timer_nr);
+				timer1app_Start();
+			}
+		}
+
 		break;
+
+	// ------------------------------------------------------------------------------
 	case alarm:
+		if(events & EV_TIMER1APP_TIME) {
+			timer1app_time.secs_total--;
+			if(timer1app_time.secs_total & 0x0001) {
+				dispBuffer_Clear();
+				dispBuffer_AddString("-----");
+			}
+			else {
+				dispBuffer_Clear();
+				dispBuffer_AddString("alarm");
+			}
+		}
+		if(events & EV_BUTTON_PRESSED) {
+			if ((gpio_states[GPIO_INDEX_BTN_STOP] == GPIO_STATE_BTN_SHORT_PRESSED) ||
+				(gpio_states[GPIO_INDEX_BTN_STOP] == GPIO_STATE_BTN_LONG_PRESSED)) {
+				lptim_RemoveEvent(timer1app_timer_nr);
+				timer1app_Start();
+			}
+		}
 		break;
+
+	// ------------------------------------------------------------------------------
 	case alarm2:
 		break;
 	}

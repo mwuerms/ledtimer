@@ -7,13 +7,15 @@
 
 #include "mainapp.h"
 #include "timer1app.h"
+#include "timer45minapp.h"
 #include "gpio.h"
 #include "dispBuffer.h"
 #include "lptim.h"
 
 static enum {
 	mainapp = 0,
-	timer1app
+	timer1app,
+	timer45minapp
 } mainapp_active_app;
 
 void mainapp_Init(void) {
@@ -21,8 +23,10 @@ void mainapp_Init(void) {
 }
 
 void mainapp_Start(void) {
-	dispBuffer_AddString("main_is_rolling!");
-	lptim_AddSingleEvent(LPTIM_PERIODE_1S, EV_MAINAPP_TIME);
+	//dispBuffer_AddString("main_is_rolling!");
+	//lptim_AddSingleEvent(LPTIM_PERIODE_1S, EV_MAINAPP_TIME);
+	mainapp_active_app = timer45minapp;
+	timer45minapp_Start();
 }
 
 uint8_t copy_gpio_states[GPIO_NB_INPUTS];
@@ -66,7 +70,10 @@ void mainapp_ProcessEvents(uint32_t events) {
 		}
 		break;
 	case timer1app:
-		timer1app_ProcessEvents(events);
-		break;
+			timer1app_ProcessEvents(events);
+			break;
+	case timer45minapp:
+			timer45minapp_ProcessEvents(events);
+			break;
 	}
 }
