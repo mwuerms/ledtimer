@@ -163,7 +163,8 @@ module buttonTS0266_cutholes(loc_res = 32) {
 }
 
 //buttonTS026695();
-buttonTS0266_cutholes();
+buttonTS0266_cut();
+//buttonTS0266_cutholes();
 
 module switchMFP140_5x(loc_res = 32, show_origin = 1) {
     // origin: center
