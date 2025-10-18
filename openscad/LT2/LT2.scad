@@ -4,6 +4,8 @@
  * 2025-10-6
  */
 
+use <parts.scad>
+
 module led0603(col = "Red", loc_res = 32) {
     // lense
     color(col)
@@ -120,9 +122,36 @@ module place_led_cuts() {
     //ledxy_cut6(+(1*4), 4*5+5/2);
 }
 
-place_leds();
-difference() {
-    translate([0, 10, 0])
-    cylinder(d = 36, h = 4, $fn = 128);
-    place_led_cuts();
+module led_mold(dia1 = 38.5, th1 = 4, loc_res = 32) {
+    difference() {
+        translate([0, 10, 0])
+        cylinder(d = dia1, h = th1, $fn = loc_res);
+        place_led_cuts();
+    }
 }
+
+module pcb(dia1 = 38.5, th1 = 1.6, loc_res = 32) {
+    // pcb
+    color("Green")
+    difference() {
+        translate([0, 10, -(th1+0.01)])
+        cylinder(d = dia1, h = th1, $fn = loc_res);
+        translate([-15.2/2, 23, -(th1+1)])
+        cube([15.2, 10, th1+2]);
+    }
+    // leds
+    translate([0, 0, 0])
+    place_leds();
+    // akku/battery
+    color("Silver")
+    translate([-34/2, 1, -6])
+    cube([34, 17, 4]);
+    //rotary encoder
+    translate([0, 23, -0.8-2])
+    rotate([-90, 0, 0])
+    rotary_encoder_pec11s_929k(loc_res = loc_res);
+}
+
+pcb();
+
+#led_mold(th1 = 4);
