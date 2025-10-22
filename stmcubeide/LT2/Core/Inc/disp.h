@@ -1,0 +1,18 @@
+/*
+ * disp.c
+ *
+ *  Created on: Oct 22, 2025
+ *      Author: martin
+ */
+
+#ifndef INC_DISP_C_
+#define INC_DISP_C_
+
+void disp_init(void);
+void disp_on(void);
+void disp_off(void);
+
+void disp_timer_isr_gpio_set(void);
+void disp_timer_isr_gpio_reset(void);
+
+#endif /* INC_DISP_C_ */

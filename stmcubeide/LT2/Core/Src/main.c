@@ -24,7 +24,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "encoder.h"
+#include "disp.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +57,47 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static int8_t main_task_func(uint8_t event, void *data);
+static task_t main_task = {.name = "main task", .task = main_task_func};
+int8_t main_tid;
+
+// states
+#define MAIN_ST_OFF (0)
+#define MAIN_ST_SET_TIMER (1)
+#define MAIN_ST_RUNNING (2)
+#define MAIN_ST_RUNNING_DISP_OFF (3)
+#define MAIN_ST_PAUSE (4)
+#define MAIN_ST_ALARM (5)
+
+struct {
+	uint16_t state;
+} main_task_ctrl = {
+		.state = MAIN_ST_OFF,
+};
+
+static int8_t main_task_func(uint8_t event, void *data) {
+	switch(main_task_ctrl.state) {
+	case MAIN_ST_OFF:
+		if(event == EV_START) {
+			// was in off state
+			main_task_ctrl.state = MAIN_ST_SET_TIMER;
+		}
+		break;
+	case MAIN_ST_SET_TIMER:
+		break;
+	case MAIN_ST_RUNNING:
+		break;
+	case MAIN_ST_RUNNING_DISP_OFF:
+		break;
+	case MAIN_ST_PAUSE:
+		break;
+	case MAIN_ST_ALARM:
+		break;
+	}
+
+	return 1; // stay on
+}
+
 
 /* USER CODE END 0 */
 
@@ -95,17 +137,30 @@ int main(void)
   MX_RTC_Init();
   MX_TIM22_Init();
   /* USER CODE BEGIN 2 */
+	scheduler_init();
+	power_mode_request(POWER_MODE_RUN);
+
+	encoder_init();
+	disp_init();
+
+	scheduler_add_task(&main_task);
+	main_tid = main_task.tid;
+	scheduler_start_task(main_tid);
+
+
+	// stay in scheduler
+	scheduler_run();
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+	while (1)
+	{
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+	}
   /* USER CODE END 3 */
 }
 

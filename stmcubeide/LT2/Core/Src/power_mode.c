@@ -11,7 +11,13 @@
 //#define DEBUG_PRINTF_ON
 #include "debug_printf.h"
 
-#include "stm32l4xx_hal.h"
+#include "main.h"
+#include "stm32l0xx_ll_pwr.h"
+#include "stm32l0xx_ll_rcc.h"
+#include "stm32l0xx_ll_system.h"
+#include "stm32l0xx_ll_utils.h"
+#include "stm32l0xx_ll_gpio.h"
+#include "stm32l0xx_ll_cortex.h"
 
 #include <string.h>
 #include "power_mode.h"
@@ -74,7 +80,7 @@ void power_mode_sleep(void) {
 			// - mcu specific code here ------------
 			while (events_is_main_fifo_empty() == true) {
 				// stay here in sleep mode
-				HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+				//HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 			}
 			break;
 		case POWER_MODE_STOP:
@@ -82,8 +88,8 @@ void power_mode_sleep(void) {
 			// - mcu specific code here ------------
 			while (events_is_main_fifo_empty() == true) {
 				// stay here in stop mode
-				HAL_SuspendTick();
-				HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
+				//HAL_SuspendTick();
+				//HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
 				//HAL_ResumeTick();
 				SystemClock_Config();
 			}

@@ -22,6 +22,8 @@
 #include "stm32l0xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "encoder.h"
+#include "disp.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -155,13 +157,6 @@ void EXTI0_1_IRQHandler(void)
 
     /* USER CODE END LL_EXTI_LINE_0 */
   }
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_1) != RESET)
-  {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_1);
-    /* USER CODE BEGIN LL_EXTI_LINE_1 */
-
-    /* USER CODE END LL_EXTI_LINE_1 */
-  }
   /* USER CODE BEGIN EXTI0_1_IRQn 1 */
 
   /* USER CODE END EXTI0_1_IRQn 1 */
@@ -193,7 +188,7 @@ void EXTI2_3_IRQHandler(void)
 void TIM22_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM22_IRQn 0 */
-
+	disp_timer_isr_gpio_set();
   /* USER CODE END TIM22_IRQn 0 */
   /* USER CODE BEGIN TIM22_IRQn 1 */
 

@@ -47,11 +47,20 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "scheduler.h"
 
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+extern int8_t main_tid;
+// events for main_tid
+#define EV_TIMER_1 (1)
+
+#define EV_ENC_PRESSED (11)
+#define EV_ENC_LONG_PRESSED (12)
+#define EV_ENC_ROT_LEFT (13)
+#define EV_ENC_ROT_RIGHT (14)
 
 /* USER CODE END ET */
 
@@ -69,7 +78,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void SystemClock_Config(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -78,7 +87,6 @@ void Error_Handler(void);
 #define ENC_A_EXTI_IRQn EXTI0_1_IRQn
 #define ENC_B_Pin LL_GPIO_PIN_1
 #define ENC_B_GPIO_Port GPIOA
-#define ENC_B_EXTI_IRQn EXTI0_1_IRQn
 #define ENC_BTN_Pin LL_GPIO_PIN_3
 #define ENC_BTN_GPIO_Port GPIOA
 #define ENC_BTN_EXTI_IRQn EXTI2_3_IRQn
