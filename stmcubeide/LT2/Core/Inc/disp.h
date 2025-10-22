@@ -11,6 +11,7 @@
 void disp_init(void);
 void disp_on(void);
 void disp_off(void);
+void disp_set_brightness(uint8_t bright);
 
 void disp_timer_isr_gpio_set(void);
 void disp_timer_isr_gpio_reset(void);

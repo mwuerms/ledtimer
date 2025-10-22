@@ -154,7 +154,7 @@ void EXTI0_1_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_0);
     /* USER CODE BEGIN LL_EXTI_LINE_0 */
-
+    encoder_a_isr();
     /* USER CODE END LL_EXTI_LINE_0 */
   }
   /* USER CODE BEGIN EXTI0_1_IRQn 1 */
@@ -174,7 +174,7 @@ void EXTI2_3_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_3);
     /* USER CODE BEGIN LL_EXTI_LINE_3 */
-
+    encoder_btn_isr();
     /* USER CODE END LL_EXTI_LINE_3 */
   }
   /* USER CODE BEGIN EXTI2_3_IRQn 1 */
@@ -188,7 +188,15 @@ void EXTI2_3_IRQHandler(void)
 void TIM22_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM22_IRQn 0 */
-	disp_timer_isr_gpio_set();
+	if (LL_TIM_IsActiveFlag_UPDATE(TIM22)) {
+		LL_TIM_ClearFlag_UPDATE(TIM22);
+		disp_timer_isr_gpio_set();
+	}
+	if (LL_TIM_IsActiveFlag_CC1(TIM22)) {
+		LL_TIM_ClearFlag_CC1(TIM22);
+		disp_timer_isr_gpio_reset();
+	}
+
   /* USER CODE END TIM22_IRQn 0 */
   /* USER CODE BEGIN TIM22_IRQn 1 */
 
