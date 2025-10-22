@@ -16,7 +16,7 @@
 
 static volatile struct {
 	uint32_t led_mask;
-	uint32_t frame;
+	uint32_t frame, out_frame;
 	uint8_t led_index;
 	uint8_t brightness;
 } disp_ctrl;
@@ -106,13 +106,24 @@ static inline void disp_add_digit_to_frame(uint8_t digit, uint8_t pos) {
 	f = led_frame_for_digit[digit];
 	if(pos == 1) {
 		// 10er
-		disp_ctrl.frame &= ~0x000007FFU << 11;
-		disp_ctrl.frame |=  f << 11;
+		disp_ctrl.frame &= ~(0x000007FFU << 11);
+		disp_ctrl.frame |=  (f << 11);
 	}
 	else {
 		// 1er
-		disp_ctrl.frame &= ~0x000007FFU;
-		disp_ctrl.frame |=  f;
+		disp_ctrl.frame &= ~(0x000007FFU);
+		disp_ctrl.frame |=  (f);
+	}
+}
+
+static inline void disp_set_act_in_frame(uint8_t act) {
+	if(act) {
+		// set on
+		disp_ctrl.frame |=  (1 << 22);
+	}
+	else {
+		// set off
+		disp_ctrl.frame &= ~(1 << 22);
 	}
 }
 
@@ -123,6 +134,7 @@ void disp_init(void) {
 	disp_ctrl.led_index = 0;
 	disp_set_brightness(50);
 	disp_show_number(12);
+	disp_activity_on();
 }
 
 void disp_set_brightness(uint8_t bright) {
@@ -130,6 +142,7 @@ void disp_set_brightness(uint8_t bright) {
 		bright = DISP_MAX_BRIGHTNESS;
 	}
 	disp_ctrl.brightness = bright;
+	LL_TIM_OC_SetCompareCH1(DISP_TIM, (uint32_t)disp_ctrl.brightness);
 }
 
 void disp_on(void) {
@@ -143,6 +156,11 @@ void disp_on(void) {
 }
 void disp_off(void) {
 	disp_disable_all_leds();
+	LL_TIM_ClearFlag_UPDATE(DISP_TIM);
+	LL_TIM_DisableIT_UPDATE(DISP_TIM);
+	// reset gpio
+	LL_TIM_ClearFlag_CC1(DISP_TIM);
+	LL_TIM_DisableIT_CC1(DISP_TIM);
 }
 
 void disp_show_number(uint8_t num) {
@@ -153,6 +171,26 @@ void disp_show_number(uint8_t num) {
 	// 1er
 	digit = num - digit * 10;
 	disp_add_digit_to_frame(digit, 0);
+	disp_ctrl.out_frame = disp_ctrl.frame;
+	if(disp_ctrl.out_frame == 0) {
+		// nothing to display -> disp_off
+		disp_off();
+	}
+	else {
+		disp_on();
+	}
+}
+
+// disp_hide_number
+
+void disp_activity_on(void) {
+	disp_set_act_in_frame(1);
+	disp_ctrl.out_frame = disp_ctrl.frame;
+}
+
+void disp_activity_off(void) {
+	disp_set_act_in_frame(0);
+	disp_ctrl.out_frame = disp_ctrl.frame;
 }
 
 
@@ -165,7 +203,7 @@ void disp_timer_isr_gpio_set(void) {
 		disp_ctrl.led_index++;
 		disp_ctrl.led_mask <<= 1;
 	}
-	if(disp_ctrl.frame & disp_ctrl.led_mask) {
+	if(disp_ctrl.out_frame & disp_ctrl.led_mask) {
 		disp_enable_led(disp_ctrl.led_index);
 	}
 	return;
