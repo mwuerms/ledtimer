@@ -57,10 +57,11 @@ extern int8_t main_tid;
 // events for main_tid
 #define EV_TIMER_1 (1)
 
-#define EV_ENC_PRESSED (11)
-#define EV_ENC_LONG_PRESSED (12)
-#define EV_ENC_ROT_LEFT (13)
-#define EV_ENC_ROT_RIGHT (14)
+#define EV_ENC_SINGLE_PRESSED (11)
+#define EV_ENC_DOUBLE_PRESSED (12)
+#define EV_ENC_LONG_PRESSED (13)
+#define EV_ENC_ROT_LEFT (14)
+#define EV_ENC_ROT_RIGHT (15)
 
 /* USER CODE END ET */
 

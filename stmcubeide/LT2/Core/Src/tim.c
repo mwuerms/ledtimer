@@ -47,7 +47,7 @@ void MX_TIM22_Init(void)
   /* USER CODE END TIM22_Init 1 */
   TIM_InitStruct.Prescaler = 100;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 120;
+  TIM_InitStruct.Autoreload = 110;
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
   LL_TIM_Init(TIM22, &TIM_InitStruct);
   LL_TIM_DisableARRPreload(TIM22);

@@ -191,6 +191,7 @@ void TIM22_IRQHandler(void)
 	if (LL_TIM_IsActiveFlag_UPDATE(TIM22)) {
 		LL_TIM_ClearFlag_UPDATE(TIM22);
 		disp_timer_isr_gpio_set();
+		encoder_timer_isr();
 	}
 	if (LL_TIM_IsActiveFlag_CC1(TIM22)) {
 		LL_TIM_ClearFlag_CC1(TIM22);
