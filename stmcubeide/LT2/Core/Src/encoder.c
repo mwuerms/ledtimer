@@ -32,24 +32,24 @@ void encoder_init(void) {
 }
 
 void encoder_a_isr(void) {
-	if(LL_GPIO_ReadInputPort(ENC_A_GPIO_Port) & (1 << ENC_A_Pin)) {
-		if(LL_GPIO_ReadInputPort(ENC_B_GPIO_Port) & (1 << ENC_A_Pin)) {
-			// A set, B set -> left
-			scheduler_send_event(main_tid, EV_ENC_ROT_LEFT, NULL);
+	if(LL_GPIO_ReadInputPort(ENC_A_GPIO_Port) & ENC_A_Pin) {
+		if(LL_GPIO_ReadInputPort(ENC_B_GPIO_Port) & ENC_B_Pin) {
+			// A set, B set -> right
+			scheduler_send_event(main_tid, EV_ENC_ROT_RIGHT, NULL);
 		}
 		else {
-			// A set, B reset -> right
-			scheduler_send_event(main_tid, EV_ENC_ROT_RIGHT, NULL);
+			// A set, B reset -> left
+			scheduler_send_event(main_tid, EV_ENC_ROT_LEFT, NULL);
 		}
 	}
 	else {
-		if(LL_GPIO_ReadInputPort(ENC_B_GPIO_Port) & (1 << ENC_A_Pin)) {
-			// A reset, B set -> right
-			scheduler_send_event(main_tid, EV_ENC_ROT_RIGHT, NULL);
+		if(LL_GPIO_ReadInputPort(ENC_B_GPIO_Port) & ENC_B_Pin) {
+			// A reset, B set -> left
+			scheduler_send_event(main_tid, EV_ENC_ROT_LEFT, NULL);
 		}
 		else {
-			// A reset, B reset -> left
-			scheduler_send_event(main_tid, EV_ENC_ROT_LEFT, NULL);
+			// A reset, B reset -> right
+			scheduler_send_event(main_tid, EV_ENC_ROT_RIGHT, NULL);
 		}
 	}
 }
@@ -58,8 +58,8 @@ void encoder_b_isr(void) {
 	// nothing to do for now
 }
 
-#define ENC_BTN_CTRL_PRESSED_TIMER_DELAY_MAX (1600) // should be 10 ms
-#define ENC_BTN_CTRL_LONG_PRESSED_TIMER_DELAY_MAX (65535) // ? ms
+#define ENC_BTN_CTRL_PRESSED_TIMER_DELAY_MAX (73) // should be 50 ms
+#define ENC_BTN_CTRL_LONG_PRESSED_TIMER_DELAY_MAX (727) // 500 ms
 #define ENC_BTN_CTRL_STATE_PRESSED  (0)
 #define ENC_BTN_CTRL_STATE_RELEASED (1)
 static volatile struct {
@@ -79,7 +79,7 @@ static volatile struct {
 };
 
 void encoder_btn_isr(void) {
-	if(LL_GPIO_ReadInputPort(ENC_BTN_GPIO_Port) & (1 << ENC_BTN_Pin)) {
+	if(LL_GPIO_ReadInputPort(ENC_BTN_GPIO_Port) & ENC_BTN_Pin) {
 		// set -> released
 		enc_btn_ctrl.btn_state = ENC_BTN_CTRL_STATE_RELEASED;
 		enc_btn_ctrl.long_pressed.timer_delay = 0;
@@ -107,18 +107,21 @@ void encoder_timer_isr(void) {
 		enc_btn_ctrl.pressed.timer_delay--;
 		if(enc_btn_ctrl.pressed.timer_delay == 0) {
 			// expired
-			if(enc_btn_ctrl.pressed.cnt == 1) {
-				scheduler_send_event(main_tid, EV_ENC_SINGLE_PRESSED, NULL);
-			}
-			else {
-				// don't care how many, more than 1
-				scheduler_send_event(main_tid, EV_ENC_DOUBLE_PRESSED, NULL);
+			if(LL_GPIO_ReadInputPort(ENC_BTN_GPIO_Port) & ENC_BTN_Pin) {
+				// btn is released, if btn is still pressed -> skip
+				if(enc_btn_ctrl.pressed.cnt == 1) {
+					scheduler_send_event(main_tid, EV_ENC_SINGLE_PRESSED, NULL);
+				}
+				else {
+					// don't care how many, more than 1
+					scheduler_send_event(main_tid, EV_ENC_DOUBLE_PRESSED, NULL);
+				}
 			}
 		}
 	}
-	if(enc_btn_ctrl.pressed.timer_delay) {
-		enc_btn_ctrl.pressed.timer_delay--;
-		if(enc_btn_ctrl.pressed.timer_delay == 0) {
+	if(enc_btn_ctrl.long_pressed.timer_delay) {
+		enc_btn_ctrl.long_pressed.timer_delay--;
+		if(enc_btn_ctrl.long_pressed.timer_delay == 0) {
 			// expired
 			scheduler_send_event(main_tid, EV_ENC_LONG_PRESSED, NULL);
 			// once for now

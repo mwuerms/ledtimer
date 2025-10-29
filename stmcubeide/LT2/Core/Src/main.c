@@ -68,6 +68,7 @@ int8_t main_tid;
 #define MAIN_ST_RUNNING_DISP_OFF (3)
 #define MAIN_ST_PAUSE (4)
 #define MAIN_ST_ALARM (5)
+#define MAIN_ST_TEST (6)
 
 struct {
 	uint16_t state;
@@ -75,12 +76,15 @@ struct {
 		.state = MAIN_ST_OFF,
 };
 
+uint8_t main_bright = 20;
+uint8_t main_num = 0;
+uint32_t main_f = 0x00000001U;
 static int8_t main_task_func(uint8_t event, void *data) {
 	switch(main_task_ctrl.state) {
 	case MAIN_ST_OFF:
 		if(event == EV_START) {
 			// was in off state
-			main_task_ctrl.state = MAIN_ST_SET_TIMER;
+			main_task_ctrl.state = MAIN_ST_TEST;
 		}
 		break;
 	case MAIN_ST_SET_TIMER:
@@ -92,6 +96,48 @@ static int8_t main_task_func(uint8_t event, void *data) {
 	case MAIN_ST_PAUSE:
 		break;
 	case MAIN_ST_ALARM:
+		break;
+
+	case MAIN_ST_TEST:
+
+		if(event == EV_ENC_SINGLE_PRESSED) {
+			main_task_ctrl.state = MAIN_ST_TEST; // to set breakpoint
+			if(main_f > (1 << 23)) {
+				main_f = 0x00000001U;
+			}
+			else {
+				main_f <<= 1;
+			}
+			disp_set_frame(main_f);
+		}
+		if(event == EV_ENC_DOUBLE_PRESSED) {
+			main_task_ctrl.state = MAIN_ST_TEST;
+			disp_set_frame(0x007FF8U);
+		}
+		if(event == EV_ENC_LONG_PRESSED) {
+			main_task_ctrl.state = MAIN_ST_TEST;
+			disp_set_frame(0x000007FFU);
+		}
+		if(event == EV_ENC_ROT_LEFT) {
+			main_task_ctrl.state = MAIN_ST_TEST;
+			if(main_bright > 10)
+				main_bright -= 10;
+			disp_set_brightness(main_bright);
+			main_num++;
+			if(main_num > 9)
+				main_num = 0;
+			disp_show_number(main_num);
+		}
+		if(event == EV_ENC_ROT_RIGHT) {
+			main_task_ctrl.state = MAIN_ST_TEST;
+			if(main_bright < 100)
+				main_bright += 10;
+			disp_set_brightness(main_bright);
+			main_num++;
+			if(main_num > 9)
+				main_num = 0;
+			disp_show_number(main_num);
+		}
 		break;
 	}
 

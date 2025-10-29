@@ -104,13 +104,13 @@ static inline void disp_add_digit_to_frame(uint8_t digit, uint8_t pos) {
 		return;
 	}
 	f = led_frame_for_digit[digit];
-	if(pos == 1) {
-		// 10er
+	if(pos == 0) {
+		// 1er
 		disp_ctrl.frame &= ~(0x000007FFU << 11);
 		disp_ctrl.frame |=  (f << 11);
 	}
 	else {
-		// 1er
+		// 10er
 		disp_ctrl.frame &= ~(0x000007FFU);
 		disp_ctrl.frame |=  (f);
 	}
@@ -130,11 +130,14 @@ static inline void disp_set_act_in_frame(uint8_t act) {
 // - public functions ----------------------------------------------------------
 
 void disp_init(void) {
+	LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_2);
 	disp_off();
 	disp_ctrl.led_index = 0;
-	disp_set_brightness(50);
+	disp_set_brightness(100);
 	disp_show_number(12);
 	disp_activity_on();
+	disp_on();
+	LL_TIM_EnableCounter(DISP_TIM);
 }
 
 void disp_set_brightness(uint8_t bright) {
@@ -181,6 +184,11 @@ void disp_show_number(uint8_t num) {
 	}
 }
 
+void disp_set_frame(uint32_t f) {
+	disp_ctrl.frame = f;
+	disp_ctrl.out_frame = disp_ctrl.frame;
+}
+
 // disp_hide_number
 
 void disp_activity_on(void) {
@@ -206,10 +214,12 @@ void disp_timer_isr_gpio_set(void) {
 	if(disp_ctrl.out_frame & disp_ctrl.led_mask) {
 		disp_enable_led(disp_ctrl.led_index);
 	}
+	LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_2);
 	return;
 }
 
 void disp_timer_isr_gpio_reset(void) {
 	disp_disable_led(disp_ctrl.led_index);
+	LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_2);
 	return;
 }
