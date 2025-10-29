@@ -76,7 +76,7 @@ static inline void disp_disable_led(uint8_t led_index) {
 		return;
 	}
 	LL_GPIO_SetPinMode(P1_GPIO_Port, disp_gpios[(led_index_to_disp_gpio[led_index][0])], LL_GPIO_MODE_INPUT);
-	LL_GPIO_SetPinMode(P1_GPIO_Port, disp_gpios[(led_index_to_disp_gpio[led_index][0])], LL_GPIO_MODE_INPUT);
+	LL_GPIO_SetPinMode(P1_GPIO_Port, disp_gpios[(led_index_to_disp_gpio[led_index][1])], LL_GPIO_MODE_INPUT);
 }
 
 static inline void disp_clear_frame(void) {
@@ -90,7 +90,7 @@ static const uint32_t led_frame_for_digit[] = {
 	0x000005FDU, // 2
 	0x000007F9U, // 3
 	0x000007A3U, // 4
-	0x000006DBU, // 5
+	0x000006FBU, // 5
 	0x000006FFU, // 6
 	0x00000791U, // 7
 	0x000007FFU, // 8
@@ -203,13 +203,13 @@ void disp_activity_off(void) {
 
 
 void disp_timer_isr_gpio_set(void) {
-	if(disp_ctrl.led_index >= DISP_NB_LEDS) {
-		disp_ctrl.led_index = 0;
-		disp_ctrl.led_mask = 0x00000001;
-	}
-	else {
+	if(disp_ctrl.led_index < DISP_NB_LEDS) {
 		disp_ctrl.led_index++;
 		disp_ctrl.led_mask <<= 1;
+	}
+	else {
+		disp_ctrl.led_index = 0;
+		disp_ctrl.led_mask = 0x00000001;
 	}
 	if(disp_ctrl.out_frame & disp_ctrl.led_mask) {
 		disp_enable_led(disp_ctrl.led_index);

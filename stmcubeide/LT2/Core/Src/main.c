@@ -124,7 +124,7 @@ static int8_t main_task_func(uint8_t event, void *data) {
 				main_bright -= 10;
 			disp_set_brightness(main_bright);
 			main_num++;
-			if(main_num > 9)
+			if(main_num > 99)
 				main_num = 0;
 			disp_show_number(main_num);
 		}
@@ -134,7 +134,7 @@ static int8_t main_task_func(uint8_t event, void *data) {
 				main_bright += 10;
 			disp_set_brightness(main_bright);
 			main_num++;
-			if(main_num > 9)
+			if(main_num > 99)
 				main_num = 0;
 			disp_show_number(main_num);
 		}
