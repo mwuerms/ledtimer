@@ -102,6 +102,7 @@ static int8_t main_task_func(uint8_t event, void *data) {
 		if(event == EV_TIMER_RTC) {
 			main_task_ctrl.state = MAIN_ST_TEST; // to set breakpoint
 
+			LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_2);
 			if(main_num) {
 				main_num--;
 				if(main_num == 0) {
@@ -115,6 +116,7 @@ static int8_t main_task_func(uint8_t event, void *data) {
 				}
 			}
 			disp_show_number(main_num);
+			LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_2);
 		}
 
 		if(event == EV_ENC_SINGLE_PRESSED) {

@@ -135,13 +135,23 @@ module pcb(dia1 = 38.5, th1 = 1.6, loc_res = 32) {
     translate([0, 0, 0])
     place_leds();
     // akku/battery
-    color("Silver")
-    translate([-34/2, 1, -6])
-    cube([34, 17, 4]);
+    *color("Silver")
+    translate([-35.6/2, 1, -6])
+    cube([35.6, 18, 4.5]);
     //rotary encoder
     translate([0, 23, -2])
     rotate([-90, 0, 0])
     rotary_encoder_pec11s_929k(loc_res = loc_res);
+    // USB
+    color("Silver") 
+    hull() {
+        translate([-3, -2, -(1.6+3/2)])
+        rotate([90, 0, 0])
+        cylinder(d = 3, h = 8, $fn = loc_res);
+        translate([+3, -2, -(1.6+3/2)])
+        rotate([90, 0, 0])
+        cylinder(d = 3, h = 8, $fn = loc_res);
+    }
 }
 
 module case_top(dia1 = 39, dia2 = 45, th1 = 4, loc_res = 32) {
@@ -165,9 +175,25 @@ module case_top(dia1 = 39, dia2 = 45, th1 = 4, loc_res = 32) {
         rotate([-90, 0, 0])
         cylinder(d = 7.4, h = 8, $fn = loc_res);
         // cut USB C
+        hull() {
+            translate([-3, -2, -(1.6+3/2)])
+            rotate([90, 0, 0])
+            cylinder(d = 3.5, h = 18, $fn = loc_res);
+            translate([+3.5, -2, -(1.6+3/2)])
+            rotate([90, 0, 0])
+            cylinder(d = 3.5, h = 18, $fn = loc_res);
+        }
+        hull() {
+            translate([-3, -10, -(1.6+3/2)])
+            rotate([90, 0, 0])
+            cylinder(d = 7, h = 18, $fn = loc_res);
+            translate([+3.5, -10, -(1.6+3/2)])
+            rotate([90, 0, 0])
+            cylinder(d = 7, h = 18, $fn = loc_res);
+        }
         
         // see inside
-        translate([0, 0, -20])
+        *translate([0, 0, -20])
         cube(40);
     }
 }
@@ -189,8 +215,8 @@ module case_bottom(dia1 = 39, dia2 = 45, th1 = 4, loc_res = 32) {
             cube([30, 10, 10]);
         }
         // cut battery
-        translate([-35/2, 1, -7.6])
-        cube([35, 18, 8]);
+        translate([-36/2, 1, -7.6])
+        cube([36, 18, 8]);
         // cut encoder
         translate([-18/2, 23-0.2, -8])
         cube([18, 4.7, 8]);
@@ -198,14 +224,29 @@ module case_bottom(dia1 = 39, dia2 = 45, th1 = 4, loc_res = 32) {
         rotate([-90, 0, 0])
         cylinder(d = 7.4, h = 8, $fn = loc_res);
         // cut USB C
+        hull() {
+            translate([-3, -2, -(1.6+3/2)])
+            rotate([90, 0, 0])
+            cylinder(d = 3.5, h = 18, $fn = loc_res);
+            translate([+3.5, -2, -(1.6+3/2)])
+            rotate([90, 0, 0])
+            cylinder(d = 3.5, h = 18, $fn = loc_res);
+        }
+        hull() {
+            translate([-3, -10, -(1.6+3/2)])
+            rotate([90, 0, 0])
+            cylinder(d = 7, h = 18, $fn = loc_res);
+            translate([+3.5, -10, -(1.6+3/2)])
+            rotate([90, 0, 0])
+            cylinder(d = 7, h = 18, $fn = loc_res);
+        }
         
         // see inside
-        translate([0, 0, -20])
+        *translate([0, 0, -20])
         cube(40);
     }
-    warning("hold the pcb somewhere up to top case");
 }
 
-pcb();
-case_top(loc_res = 128);
-case_bottom(loc_res = 128);
+*pcb();
+case_top(loc_res = 128); // print 1 x
+*case_bottom(loc_res = 128); // print 1 x

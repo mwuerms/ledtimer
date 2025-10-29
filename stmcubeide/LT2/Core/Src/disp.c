@@ -252,13 +252,13 @@ void disp_timer_isr_gpio_set(void) {
 		}
 		disp_enable_led(disp_ctrl.led_index);
 	}
-	LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_2);
+	//LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_2);
 	return;
 }
 
 void disp_timer_isr_gpio_reset(void) {
 	disp_disable_led(disp_ctrl.led_index);
-	LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_2);
+	//LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_2);
 	if(disp_ctrl.led_index == DISP_ACTIVITY_INDEX) {
 		// set CC1 back to normal
 		LL_TIM_OC_SetCompareCH1(DISP_TIM, (uint32_t)disp_ctrl.brightness);
