@@ -99,20 +99,62 @@ static int8_t main_task_func(uint8_t event, void *data) {
 		break;
 
 	case MAIN_ST_TEST:
+		if(event == EV_TIMER_RTC) {
+			main_task_ctrl.state = MAIN_ST_TEST; // to set breakpoint
+
+			if(main_num) {
+				main_num--;
+				if(main_num == 0) {
+					// expired -> stop RTC WUT
+					LL_RTC_DisableWriteProtection(RTC);
+					LL_RTC_ClearFlag_WUT(RTC);
+					LL_RTC_DisableIT_WUT(RTC);
+					LL_RTC_WAKEUP_Disable(RTC);
+					LL_RTC_EnableWriteProtection(RTC);
+					LL_EXTI_DisableIT_0_31(LL_EXTI_LINE_20);  			// Enable interrupt for EXTI line 20 (RTC)
+				}
+			}
+			disp_show_number(main_num);
+		}
 
 		if(event == EV_ENC_SINGLE_PRESSED) {
 			main_task_ctrl.state = MAIN_ST_TEST; // to set breakpoint
-			if(main_f > (1 << 23)) {
-				main_f = 0x00000001U;
-			}
-			else {
-				main_f <<= 1;
-			}
-			disp_set_frame(main_f);
+
+			// RTC konfigurieren
+/*		    LL_RTC_DisableWriteProtection(RTC);
+		    LL_RTC_DisableInitMode(RTC);
+
+		    LL_RTC_InitTypeDef RTC_InitStruct = {0};
+		    RTC_InitStruct.HourFormat = LL_RTC_HOURFORMAT_24HOUR;
+		    RTC_InitStruct.AsynchPrescaler = 127;
+		    RTC_InitStruct.SynchPrescaler = 255;
+		    LL_RTC_Init(RTC, &RTC_InitStruct);
+		    LL_RTC_EnableWriteProtection(RTC);
+*/
+		    // Wakeup Timer konfigurieren (1 Hz)
+		    LL_RTC_DisableWriteProtection(RTC);
+		    LL_RTC_WAKEUP_Disable(RTC);
+	//	    while(!LL_RTC_IsActiveFlag_WUTW(RTC));
+		    LL_RTC_WAKEUP_SetClock(RTC, LL_RTC_WAKEUPCLOCK_CKSPRE);
+		    LL_RTC_WAKEUP_SetAutoReload(RTC, 0);
+		    LL_RTC_ClearFlag_WUT(RTC);
+		    LL_RTC_EnableIT_WUT(RTC);
+		    LL_RTC_WAKEUP_Enable(RTC);
+		    LL_RTC_EnableWriteProtection(RTC);
+
+		    LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_20);  			// Enable interrupt for EXTI line 20 (RTC)
+		    LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_20);  	// Trigger on rising edge for line 20 (RTC)
+
+		    // NVIC konfigurieren
+		    NVIC_SetPriority(RTC_IRQn, 0);
+		    NVIC_EnableIRQ(RTC_IRQn);
+
+			main_num = 25;
+			disp_show_number(main_num);
 		}
 		if(event == EV_ENC_DOUBLE_PRESSED) {
 			main_task_ctrl.state = MAIN_ST_TEST;
-			disp_set_frame(0x007FF8U);
+			disp_set_frame(0x007FF800U);
 		}
 		if(event == EV_ENC_LONG_PRESSED) {
 			main_task_ctrl.state = MAIN_ST_TEST;
@@ -182,6 +224,7 @@ int main(void)
   MX_GPIO_Init();
   MX_RTC_Init();
   MX_TIM22_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 	scheduler_init();
 	power_mode_request(POWER_MODE_RUN);

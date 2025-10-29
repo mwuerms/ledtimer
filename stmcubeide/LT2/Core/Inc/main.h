@@ -55,7 +55,8 @@ extern "C" {
 /* USER CODE BEGIN ET */
 extern int8_t main_tid;
 // events for main_tid
-#define EV_TIMER_1 (1)
+#define EV_TIMER_RTC (1)
+#define EV_TIMER_1 (2)
 
 #define EV_ENC_SINGLE_PRESSED (11)
 #define EV_ENC_DOUBLE_PRESSED (12)

@@ -12,6 +12,7 @@
 
 #define DISP_TIM TIM22
 #define DISP_NB_LEDS (23)
+#define DISP_ACTIVITY_INDEX (22)
 #define DISP_MAX_BRIGHTNESS (99) // 0 ... 99
 
 static volatile struct {
@@ -19,6 +20,12 @@ static volatile struct {
 	uint32_t frame, out_frame;
 	uint8_t led_index;
 	uint8_t brightness;
+	struct {
+		uint8_t state;
+		struct {
+			uint8_t min, max, cnt;
+		} bright;
+	} activity;
 } disp_ctrl;
 
 static inline void disp_disable_all_leds(void) {
@@ -80,8 +87,12 @@ static inline void disp_disable_led(uint8_t led_index) {
 }
 
 static inline void disp_clear_frame(void) {
-	// TODO was ist mit der D23 -> "Aktivity"
-	disp_ctrl.frame = 0;
+	if(disp_ctrl.frame & (1 << DISP_ACTIVITY_INDEX)) {
+		disp_ctrl.frame = (1 << DISP_ACTIVITY_INDEX);
+	}
+	else {
+		disp_ctrl.frame = 0;
+	}
 }
 
 static const uint32_t led_frame_for_digit[] = {
@@ -119,11 +130,11 @@ static inline void disp_add_digit_to_frame(uint8_t digit, uint8_t pos) {
 static inline void disp_set_act_in_frame(uint8_t act) {
 	if(act) {
 		// set on
-		disp_ctrl.frame |=  (1 << 22);
+		disp_ctrl.frame |=  (1 << DISP_ACTIVITY_INDEX);
 	}
 	else {
 		// set off
-		disp_ctrl.frame &= ~(1 << 22);
+		disp_ctrl.frame &= ~(1 << DISP_ACTIVITY_INDEX);
 	}
 }
 
@@ -137,6 +148,10 @@ void disp_init(void) {
 	disp_show_number(12);
 	disp_activity_on();
 	disp_on();
+	disp_ctrl.activity.state = 0;
+	disp_ctrl.activity.bright.cnt = 50;
+	disp_ctrl.activity.bright.max = disp_ctrl.brightness;
+	disp_ctrl.activity.bright.min = 25;
 	LL_TIM_EnableCounter(DISP_TIM);
 }
 
@@ -145,6 +160,7 @@ void disp_set_brightness(uint8_t bright) {
 		bright = DISP_MAX_BRIGHTNESS;
 	}
 	disp_ctrl.brightness = bright;
+	disp_ctrl.activity.bright.max = disp_ctrl.brightness;
 	LL_TIM_OC_SetCompareCH1(DISP_TIM, (uint32_t)disp_ctrl.brightness);
 }
 
@@ -212,6 +228,28 @@ void disp_timer_isr_gpio_set(void) {
 		disp_ctrl.led_mask = 0x00000001;
 	}
 	if(disp_ctrl.out_frame & disp_ctrl.led_mask) {
+		if(disp_ctrl.led_index == DISP_ACTIVITY_INDEX) {
+			if(disp_ctrl.activity.state == 1) {
+				// turn up
+				if(disp_ctrl.activity.bright.cnt < disp_ctrl.activity.bright.max) {
+					disp_ctrl.activity.bright.cnt++;
+				}
+				else {
+					disp_ctrl.activity.state = 0;
+				}
+			}
+			else {
+				// turn down
+				if(disp_ctrl.activity.bright.cnt > disp_ctrl.activity.bright.min) {
+					disp_ctrl.activity.bright.cnt--;
+				}
+				else {
+					disp_ctrl.activity.state = 1;
+				}
+
+			}
+			LL_TIM_OC_SetCompareCH1(DISP_TIM, (uint32_t)disp_ctrl.activity.bright.cnt);
+		}
 		disp_enable_led(disp_ctrl.led_index);
 	}
 	LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_2);
@@ -221,5 +259,9 @@ void disp_timer_isr_gpio_set(void) {
 void disp_timer_isr_gpio_reset(void) {
 	disp_disable_led(disp_ctrl.led_index);
 	LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_2);
+	if(disp_ctrl.led_index == DISP_ACTIVITY_INDEX) {
+		// set CC1 back to normal
+		LL_TIM_OC_SetCompareCH1(DISP_TIM, (uint32_t)disp_ctrl.brightness);
+	}
 	return;
 }

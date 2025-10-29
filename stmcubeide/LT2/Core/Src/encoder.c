@@ -58,7 +58,7 @@ void encoder_b_isr(void) {
 	// nothing to do for now
 }
 
-#define ENC_BTN_CTRL_PRESSED_TIMER_DELAY_MAX (73) // should be 50 ms
+#define ENC_BTN_CTRL_PRESSED_TIMER_DELAY_MAX (200)//(73) // should be 50 ms
 #define ENC_BTN_CTRL_LONG_PRESSED_TIMER_DELAY_MAX (727) // 500 ms
 #define ENC_BTN_CTRL_STATE_PRESSED  (0)
 #define ENC_BTN_CTRL_STATE_RELEASED (1)
