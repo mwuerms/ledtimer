@@ -200,24 +200,24 @@ module switchMFP140_5x_cut() {
 module rotary_encoder_pec11s_929k(loc_res = 32) {
     // body
     color("DarkGray")
-    translate([-14.2/2, -11.7/2, 0])
-    cube([14.2, 11.7, 4.5]);
+    translate([-16/2, -12/2, 0])
+    cube([16, 12, 5]);
     // working contacts
     color("LightGray")
-    translate([-14.4/2, -(5/2+1/2), 0.1])
-    cube([14.4, 1, 1]);
+    translate([-16.2/2, -(5/2+1/2), 0.1])
+    cube([16.2, 1, 1]);
     color("LightGray")
     translate([0, -(1/2), 0.1])
-    cube([14.4/2, 1, 1]);
+    cube([16.2/2, 1, 1]);
     color("LightGray")
-    translate([-14.4/2, +(5/2-1/2), 0.1])
-    cube([14.4, 1, 1]);
+    translate([-16.2/2, +(5/2-1/2), 0.1])
+    cube([16.2, 1, 1]);
     // mounting contacts
     color("LightGray")
-    translate([-18/2, +(11.7/2-2), 0.1])
+    translate([-18/2, +(12/2-2), 0.1])
     cube([18, 1.9, 1]);
     color("LightGray")
-    translate([-18/2, -(11.7/2)+0.1, 0.1])
+    translate([-18/2, -(12/2)+0.1, 0.1])
     cube([18, 1.9, 1]);
     // positioning pegs
     color("DarkGray")
@@ -228,14 +228,34 @@ module rotary_encoder_pec11s_929k(loc_res = 32) {
     cylinder(d = 1.5, h = 1.3, $fn = loc_res);
     // shaft
     color("DarkGray")
-    translate([0, 0, 4.5])
+    translate([0, 0, 5])
     cylinder(d = 7, h = 5, $fn = loc_res);
     // kurled head
     color("LightGray")
-    translate([0, 0, 4.5+5])
-    cylinder(d = 5, h = 2.9, $fn = loc_res);
+    translate([0, 0, 5])
+    cylinder(d = 5, h = 9, $fn = loc_res);
     color("LightGray")
-    translate([0, 0, 4.5+(9.5-2.9)])
+    translate([0, 0, 5+(9.5-2.9)])
     cylinder(d = 6, h = 2.9, $fn = loc_res);
 }
-rotary_encoder_pec11s_929k();
+//rotary_encoder_pec11s_929k();
+
+module rotary_encoder_pec11s_929k_cut(loc_res = 32) {
+    // body
+    translate([-16.6/2, -12.4/2, 0])
+    cube([16.6, 12.4, 5.3]);
+    // working contacts
+    // mounting contacts
+    translate([-18/2, -12.4/2, 0])
+    cube([18.4, 12.5, 1.4]);
+    // positioning pegs
+    translate([0, 0, -1.4])
+    cylinder(d = 2.4, h = 1.5, $fn = loc_res);
+    translate([+4.5, 0, -1.4])
+    cylinder(d = 2, h = 1.5, $fn = loc_res);
+    // shaft
+    translate([0, 0, 5])
+    cylinder(d = 7.4, h = 10, $fn = loc_res);
+    // kurled head
+}
+rotary_encoder_pec11s_929k_cut();
