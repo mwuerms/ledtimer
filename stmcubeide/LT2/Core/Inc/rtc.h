@@ -39,6 +39,8 @@ extern "C" {
 void MX_RTC_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+void rtc_start_1s_timing_event(void);
+void rtc_stop_timing_event(void);
 
 /* USER CODE END Prototypes */
 

@@ -78,6 +78,7 @@ struct {
 
 uint8_t main_bright = 20;
 uint8_t main_num = 0;
+uint8_t main_cnt = 0;
 uint32_t main_f = 0x00000001U;
 static int8_t main_task_func(uint8_t event, void *data) {
 	switch(main_task_ctrl.state) {
@@ -105,53 +106,41 @@ static int8_t main_task_func(uint8_t event, void *data) {
 			LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_2);
 			if(main_num) {
 				main_num--;
+				disp_show_number(main_num);
 				if(main_num == 0) {
+					main_cnt = 8;
 					// expired -> stop RTC WUT
-					LL_RTC_DisableWriteProtection(RTC);
-					LL_RTC_ClearFlag_WUT(RTC);
-					LL_RTC_DisableIT_WUT(RTC);
-					LL_RTC_WAKEUP_Disable(RTC);
-					LL_RTC_EnableWriteProtection(RTC);
-					LL_EXTI_DisableIT_0_31(LL_EXTI_LINE_20);  			// Enable interrupt for EXTI line 20 (RTC)
+					//rtc_stop_timing_event();
 				}
 			}
-			disp_show_number(main_num);
+			else {
+				if(main_cnt) {
+					main_cnt--;
+					if(main_cnt & 0x01) {
+						//disp_off();
+						disp_set_frame(0);
+					}
+					else {
+						//disp_on();
+						disp_show_number(0);
+					}
+				}
+				else {
+					rtc_stop_timing_event();
+					//disp_off();
+					disp_set_frame(0);
+				}
+			}
+
 			LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_2);
 		}
 
 		if(event == EV_ENC_SINGLE_PRESSED) {
 			main_task_ctrl.state = MAIN_ST_TEST; // to set breakpoint
 
-			// RTC konfigurieren
-/*		    LL_RTC_DisableWriteProtection(RTC);
-		    LL_RTC_DisableInitMode(RTC);
+			rtc_start_1s_timing_event();
 
-		    LL_RTC_InitTypeDef RTC_InitStruct = {0};
-		    RTC_InitStruct.HourFormat = LL_RTC_HOURFORMAT_24HOUR;
-		    RTC_InitStruct.AsynchPrescaler = 127;
-		    RTC_InitStruct.SynchPrescaler = 255;
-		    LL_RTC_Init(RTC, &RTC_InitStruct);
-		    LL_RTC_EnableWriteProtection(RTC);
-*/
-		    // Wakeup Timer konfigurieren (1 Hz)
-		    LL_RTC_DisableWriteProtection(RTC);
-		    LL_RTC_WAKEUP_Disable(RTC);
-	//	    while(!LL_RTC_IsActiveFlag_WUTW(RTC));
-		    LL_RTC_WAKEUP_SetClock(RTC, LL_RTC_WAKEUPCLOCK_CKSPRE);
-		    LL_RTC_WAKEUP_SetAutoReload(RTC, 0);
-		    LL_RTC_ClearFlag_WUT(RTC);
-		    LL_RTC_EnableIT_WUT(RTC);
-		    LL_RTC_WAKEUP_Enable(RTC);
-		    LL_RTC_EnableWriteProtection(RTC);
-
-		    LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_20);  			// Enable interrupt for EXTI line 20 (RTC)
-		    LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_20);  	// Trigger on rising edge for line 20 (RTC)
-
-		    // NVIC konfigurieren
-		    NVIC_SetPriority(RTC_IRQn, 0);
-		    NVIC_EnableIRQ(RTC_IRQn);
-
-			main_num = 25;
+			main_num = 11;
 			disp_show_number(main_num);
 		}
 		if(event == EV_ENC_DOUBLE_PRESSED) {

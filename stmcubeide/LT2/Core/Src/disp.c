@@ -173,6 +173,7 @@ void disp_on(void) {
 	LL_TIM_EnableIT_CC1(DISP_TIM);
 	return;
 }
+
 void disp_off(void) {
 	disp_disable_all_leds();
 	LL_TIM_ClearFlag_UPDATE(DISP_TIM);

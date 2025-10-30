@@ -65,5 +65,33 @@ void MX_RTC_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
+void rtc_start_1s_timing_event(void) {
+	// Wakeup Timer konfigurieren (1 Hz)
+	LL_RTC_DisableWriteProtection(RTC);
+	LL_RTC_WAKEUP_Disable(RTC);
+	//	    while(!LL_RTC_IsActiveFlag_WUTW(RTC));
+	LL_RTC_WAKEUP_SetClock(RTC, LL_RTC_WAKEUPCLOCK_CKSPRE);
+	LL_RTC_WAKEUP_SetAutoReload(RTC, 0);
+	LL_RTC_ClearFlag_WUT(RTC);
+	LL_RTC_EnableIT_WUT(RTC);
+	LL_RTC_WAKEUP_Enable(RTC);
+	LL_RTC_EnableWriteProtection(RTC);
 
+	// Enable interrupt for EXTI line 20 (RTC)
+	LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_20);
+  	// Trigger on rising edge for line 20 (RTC)
+	LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_20);
+
+	NVIC_SetPriority(RTC_IRQn, 0);
+	NVIC_EnableIRQ(RTC_IRQn);
+}
+
+void rtc_stop_timing_event(void) {
+	LL_RTC_DisableWriteProtection(RTC);
+	LL_RTC_ClearFlag_WUT(RTC);
+	LL_RTC_DisableIT_WUT(RTC);
+	LL_RTC_WAKEUP_Disable(RTC);
+	LL_RTC_EnableWriteProtection(RTC);
+	LL_EXTI_DisableIT_0_31(LL_EXTI_LINE_20);
+}
 /* USER CODE END 1 */
