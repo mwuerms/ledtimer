@@ -82,7 +82,7 @@ static struct {
 };
 #define TIMER_SET_MAX_MINUTES (99)
 #define TIMER_SET_MIN_MINUTES (01)
-#define TIMER_SET_SECONDS (9)// testing (59)
+#define TIMER_SET_SECONDS (59)
 
 #define TIMER_DISP_ON_TIMEOUT (20) // in s
 
@@ -90,10 +90,6 @@ uint8_t main_bright = 20;
 uint8_t main_num = 0;
 uint8_t main_cnt = 0;
 uint32_t main_f = 0x00000001U;
-
-#define disp_show_activity_on()
-#define disp_show_activity_off()
-#define disp_number_off()
 
 static int8_t main_task_func(uint8_t event, void *data) {
 	switch(main_task_ctrl.state) {
@@ -144,7 +140,7 @@ static int8_t main_task_func(uint8_t event, void *data) {
 			main_task_ctrl.timer_cnt.min = main_task_ctrl.timer_set.min;
 			main_task_ctrl.timer_cnt.sec = main_task_ctrl.timer_set.sec;
 			disp_show_number(main_task_ctrl.timer_cnt.min);
-			disp_show_activity_on();
+			disp_activity_on();
 			rtc_start_1s_timing_event();
 		}
 		if(event == EV_ENC_LONG_PRESSED) { // stop, off
@@ -161,8 +157,9 @@ static int8_t main_task_func(uint8_t event, void *data) {
 			if(main_task_ctrl.timer_cnt.sec == 0) {
 				if(main_task_ctrl.timer_cnt.min == 0) {
 					// expired: ALARM
-					main_task_ctrl.disp_state = 0;
 					main_task_ctrl.state = MAIN_ST_ALARM;
+					main_task_ctrl.disp_state = 0;
+					disp_show_number(main_task_ctrl.timer_set.min);
 				}
 				else {
 					main_task_ctrl.timer_cnt.sec = TIMER_SET_SECONDS;
@@ -181,9 +178,9 @@ static int8_t main_task_func(uint8_t event, void *data) {
 			}
 			if(main_task_ctrl.disp_state) {
 				if(main_task_ctrl.timer_cnt.sec & 0x01)
-					disp_show_activity_on();
+					disp_activity_on();
 				else
-					disp_show_activity_off();
+					disp_activity_off();
 			}
 		}
 		if(event == EV_ENC_SINGLE_PRESSED) { // pause
@@ -195,7 +192,7 @@ static int8_t main_task_func(uint8_t event, void *data) {
 			else {
 				disp_show_number(main_task_ctrl.timer_cnt.sec);
 			}
-			disp_show_activity_off();
+			disp_activity_off();
 			main_task_ctrl.disp_state = 0;
 		}
 		if(event == EV_ENC_LONG_PRESSED) { // stop, set time
@@ -227,12 +224,38 @@ static int8_t main_task_func(uint8_t event, void *data) {
 				}
 			}
 		}
+		if(event == EV_ENC_SINGLE_PRESSED) { // resume
+			main_task_ctrl.state = MAIN_ST_RUNNING;
+			disp_show_number(main_task_ctrl.timer_cnt.min);
+			disp_activity_on();
+			rtc_start_1s_timing_event();
+		}
+		if(event == EV_ENC_LONG_PRESSED) { // stop, set time
+			main_task_ctrl.state = MAIN_ST_SET_TIMER;
+			disp_show_number(main_task_ctrl.timer_set.min);
+			main_task_ctrl.disp_timeout = TIMER_DISP_ON_TIMEOUT;
+			rtc_start_1s_timing_event();
+		}
 		break;
 
 	// -------------------------------------------------------------------------// -------------------------------------------------------------------------
 	case MAIN_ST_ALARM:
-		if(event == EV_TIMER_RTC) {
-			main_task_ctrl.state = MAIN_ST_ALARM;
+		if(event == EV_TIMER_RTC) { // blink time
+			if(main_task_ctrl.disp_state == 0) {
+				main_task_ctrl.disp_state = 1;
+				disp_number_off();
+			}
+			else {
+				main_task_ctrl.disp_state = 0;
+				disp_show_number(main_task_ctrl.timer_set.min);
+			}
+		}
+		if( (event == EV_ENC_SINGLE_PRESSED) ||
+			(event == EV_ENC_LONG_PRESSED)) { // done, go back to set time
+			main_task_ctrl.state = MAIN_ST_SET_TIMER;
+			disp_show_number(main_task_ctrl.timer_set.min);
+			main_task_ctrl.disp_timeout = TIMER_DISP_ON_TIMEOUT;
+			rtc_start_1s_timing_event();
 		}
 		break;
 	}

@@ -13,6 +13,10 @@
 #define DISP_TIM TIM22
 #define DISP_NB_LEDS (23)
 #define DISP_ACTIVITY_INDEX (22)
+#define DISP_LOWER_NUMBER_MASK (0x000007FF)
+#define DISP_UPPER_NUMBER_MASK (DISP_LOWER_NUMBER_MASK << 11)
+#define DISP_ALL_NUMBER_MASK (DISP_UPPER_NUMBER_MASK | DISP_LOWER_NUMBER_MASK)
+#define DISP_ACTIVITY_MASK (1 << DISP_ACTIVITY_INDEX)
 #define DISP_MAX_BRIGHTNESS (99) // 0 ... 99
 
 static volatile struct {
@@ -117,12 +121,12 @@ static inline void disp_add_digit_to_frame(uint8_t digit, uint8_t pos) {
 	f = led_frame_for_digit[digit];
 	if(pos == 0) {
 		// 1er
-		disp_ctrl.frame &= ~(0x000007FFU << 11);
+		disp_ctrl.frame &= ~(DISP_UPPER_NUMBER_MASK);
 		disp_ctrl.frame |=  (f << 11);
 	}
 	else {
 		// 10er
-		disp_ctrl.frame &= ~(0x000007FFU);
+		disp_ctrl.frame &= ~(DISP_LOWER_NUMBER_MASK);
 		disp_ctrl.frame |=  (f);
 	}
 }
@@ -130,11 +134,22 @@ static inline void disp_add_digit_to_frame(uint8_t digit, uint8_t pos) {
 static inline void disp_set_act_in_frame(uint8_t act) {
 	if(act) {
 		// set on
-		disp_ctrl.frame |=  (1 << DISP_ACTIVITY_INDEX);
+		disp_ctrl.frame |=  (DISP_ACTIVITY_MASK);
 	}
 	else {
 		// set off
-		disp_ctrl.frame &= ~(1 << DISP_ACTIVITY_INDEX);
+		disp_ctrl.frame &= ~(DISP_ACTIVITY_MASK);
+	}
+}
+
+static inline void disp_set_out_frame(uint32_t f) {
+	disp_ctrl.out_frame = f;
+	if(disp_ctrl.out_frame == 0) {
+		// nothing to display -> disp_off
+		disp_off();
+	}
+	else {
+		disp_on();
 	}
 }
 
@@ -192,33 +207,26 @@ void disp_show_number(uint8_t num) {
 	// 1er
 	digit = num - digit * 10;
 	disp_add_digit_to_frame(digit, 0);
-	disp_ctrl.out_frame = disp_ctrl.frame;
-	if(disp_ctrl.out_frame == 0) {
-		// nothing to display -> disp_off
-		disp_off();
-	}
-	else {
-		disp_on();
-	}
+	disp_set_out_frame(disp_ctrl.frame);
 }
 
-void disp_set_frame(uint32_t f) {
-	disp_ctrl.frame = f;
-	disp_ctrl.out_frame = disp_ctrl.frame;
+void disp_number_on() {
+	disp_set_out_frame(disp_ctrl.frame);
 }
 
-// disp_hide_number
+void disp_number_off() {
+	disp_set_out_frame(disp_ctrl.frame & ~DISP_ALL_NUMBER_MASK);
+}
 
 void disp_activity_on(void) {
 	disp_set_act_in_frame(1);
-	disp_ctrl.out_frame = disp_ctrl.frame;
+	disp_set_out_frame(disp_ctrl.frame);
 }
 
 void disp_activity_off(void) {
 	disp_set_act_in_frame(0);
-	disp_ctrl.out_frame = disp_ctrl.frame;
+	disp_set_out_frame(disp_ctrl.frame);
 }
-
 
 void disp_timer_isr_gpio_set(void) {
 	if(disp_ctrl.led_index < DISP_NB_LEDS) {
@@ -230,7 +238,7 @@ void disp_timer_isr_gpio_set(void) {
 		disp_ctrl.led_mask = 0x00000001;
 	}
 	if(disp_ctrl.out_frame & disp_ctrl.led_mask) {
-		if(disp_ctrl.led_index == DISP_ACTIVITY_INDEX) {
+		/*if(disp_ctrl.led_index == DISP_ACTIVITY_INDEX) {
 			if(disp_ctrl.activity.state == 1) {
 				// turn up
 				if(disp_ctrl.activity.bright.cnt < disp_ctrl.activity.bright.max) {
@@ -251,7 +259,7 @@ void disp_timer_isr_gpio_set(void) {
 
 			}
 			LL_TIM_OC_SetCompareCH1(DISP_TIM, (uint32_t)disp_ctrl.activity.bright.cnt);
-		}
+		}*/
 		disp_enable_led(disp_ctrl.led_index);
 	}
 	//LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_2);

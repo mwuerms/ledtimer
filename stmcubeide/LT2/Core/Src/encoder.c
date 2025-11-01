@@ -17,10 +17,10 @@
 
 
 static inline void encoder_setup_btn_timer(void) {
-	LL_TIM_OC_SetCompareCH1(TIM_ENC, 60); // in ms
+	LL_TIM_OC_SetCompareCH1(TIM_ENC, 250); // in ms
 	LL_TIM_ClearFlag_CC1(TIM_ENC);
 	LL_TIM_EnableIT_CC1(TIM_ENC);
-	LL_TIM_OC_SetCompareCH2(TIM_ENC, 500); // in ms
+	LL_TIM_OC_SetCompareCH2(TIM_ENC, 950); // in ms
 	LL_TIM_ClearFlag_CC2(TIM_ENC);
 	LL_TIM_EnableIT_CC2(TIM_ENC);
 }
@@ -119,6 +119,7 @@ void encoder_btn_isr(void) {
 			enc_btn_ctrl.btn_state = ENC_BTN_CTRL_STATE_PRESSED;
 			enc_btn_ctrl.pressed_cnt++;
 			encoder_restart_btn_timer();
+			LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_2);
 		}
 	}
 }
@@ -138,6 +139,8 @@ void encoder_btn_timer_pressed_isr(void) {
 		}
 	}
 	enc_btn_ctrl.pressed_cnt = 0;
+	LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_2);
+	LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_2);
 }
 
 void encoder_btn_timer_long_pressed_isr(void){
@@ -147,6 +150,7 @@ void encoder_btn_timer_long_pressed_isr(void){
 		scheduler_send_event(main_tid, EV_ENC_LONG_PRESSED, NULL);
 	}
 	encoder_stop_btn_timer();
+	LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_2);
 }
 
 void encoder_btn_use_int_only(void) {
