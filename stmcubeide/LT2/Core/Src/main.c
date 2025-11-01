@@ -70,106 +70,169 @@ int8_t main_tid;
 #define MAIN_ST_ALARM (5)
 #define MAIN_ST_TEST (6)
 
-struct {
+static struct {
 	uint16_t state;
+	struct {
+		uint8_t min, sec;
+	} timer_set, timer_cnt;
+	uint16_t disp_timeout;
+	uint8_t disp_state;
 } main_task_ctrl = {
 		.state = MAIN_ST_OFF,
 };
+#define TIMER_SET_MAX_MINUTES (99)
+#define TIMER_SET_MIN_MINUTES (01)
+#define TIMER_SET_SECONDS (9)// testing (59)
+
+#define TIMER_DISP_ON_TIMEOUT (20) // in s
 
 uint8_t main_bright = 20;
 uint8_t main_num = 0;
 uint8_t main_cnt = 0;
 uint32_t main_f = 0x00000001U;
+
+#define disp_show_activity_on()
+#define disp_show_activity_off()
+#define disp_number_off()
+
 static int8_t main_task_func(uint8_t event, void *data) {
 	switch(main_task_ctrl.state) {
+	// -------------------------------------------------------------------------
 	case MAIN_ST_OFF:
-		if(event == EV_START) {
+		if( (event == EV_START) ||
+			(event == EV_ENC_SINGLE_PRESSED)) {
 			// was in off state
-			main_task_ctrl.state = MAIN_ST_TEST;
+			main_task_ctrl.state = MAIN_ST_SET_TIMER;
+			main_task_ctrl.timer_set.min = 1;
+			main_task_ctrl.timer_set.sec = 0;
+			disp_on();
+			disp_show_number(main_task_ctrl.timer_set.min);
+			main_task_ctrl.disp_timeout = TIMER_DISP_ON_TIMEOUT;
+			rtc_start_1s_timing_event();
+			encoder_btn_use_debounce();
 		}
 		break;
+
+	// -------------------------------------------------------------------------
 	case MAIN_ST_SET_TIMER:
+		if(event == EV_TIMER_RTC) { // timeout--
+			if(main_task_ctrl.disp_timeout) {
+				main_task_ctrl.disp_timeout--;
+				if(main_task_ctrl.disp_timeout == 0) {
+					// expired
+					main_task_ctrl.state = MAIN_ST_OFF;
+					rtc_stop_timing_event();
+				}
+			}
+		}
+		if(event == EV_ENC_ROT_RIGHT) { // +
+			main_task_ctrl.disp_timeout = TIMER_DISP_ON_TIMEOUT; // reset timeout
+			if(main_task_ctrl.timer_set.min < TIMER_SET_MAX_MINUTES) {
+				main_task_ctrl.timer_set.min++;
+				disp_show_number(main_task_ctrl.timer_set.min);
+			}
+		}
+		if(event == EV_ENC_ROT_LEFT) { // -
+			main_task_ctrl.disp_timeout = TIMER_DISP_ON_TIMEOUT; // reset timeout
+			if(main_task_ctrl.timer_set.min > TIMER_SET_MIN_MINUTES) {
+				main_task_ctrl.timer_set.min--;
+				disp_show_number(main_task_ctrl.timer_set.min);
+			}
+		}
+		if(event == EV_ENC_SINGLE_PRESSED) { // start
+			main_task_ctrl.state = MAIN_ST_RUNNING;
+			main_task_ctrl.timer_cnt.min = main_task_ctrl.timer_set.min;
+			main_task_ctrl.timer_cnt.sec = main_task_ctrl.timer_set.sec;
+			disp_show_number(main_task_ctrl.timer_cnt.min);
+			disp_show_activity_on();
+			rtc_start_1s_timing_event();
+		}
+		if(event == EV_ENC_LONG_PRESSED) { // stop, off
+			main_task_ctrl.state = MAIN_ST_OFF;
+			rtc_stop_timing_event();
+			encoder_btn_use_int_only();
+		}
 		break;
+
+	// -------------------------------------------------------------------------
 	case MAIN_ST_RUNNING:
-		break;
-	case MAIN_ST_RUNNING_DISP_OFF:
-		break;
-	case MAIN_ST_PAUSE:
-		break;
-	case MAIN_ST_ALARM:
-		break;
-
-	case MAIN_ST_TEST:
-		if(event == EV_TIMER_RTC) {
-			main_task_ctrl.state = MAIN_ST_TEST; // to set breakpoint
-
-			LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_2);
-			if(main_num) {
-				main_num--;
-				disp_show_number(main_num);
-				if(main_num == 0) {
-					main_cnt = 8;
-					// expired -> stop RTC WUT
-					//rtc_stop_timing_event();
+		if(event == EV_TIMER_RTC) { // timeout--
+			main_task_ctrl.disp_state = 1;
+			if(main_task_ctrl.timer_cnt.sec == 0) {
+				if(main_task_ctrl.timer_cnt.min == 0) {
+					// expired: ALARM
+					main_task_ctrl.disp_state = 0;
+					main_task_ctrl.state = MAIN_ST_ALARM;
+				}
+				else {
+					main_task_ctrl.timer_cnt.sec = TIMER_SET_SECONDS;
+					main_task_ctrl.timer_cnt.min--;
 				}
 			}
 			else {
-				if(main_cnt) {
-					main_cnt--;
-					if(main_cnt & 0x01) {
-						//disp_off();
-						disp_set_frame(0);
-					}
-					else {
-						//disp_on();
-						disp_show_number(0);
-					}
-				}
-				else {
-					rtc_stop_timing_event();
-					//disp_off();
-					disp_set_frame(0);
-				}
+				main_task_ctrl.timer_cnt.sec--;
 			}
 
-			LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_2);
+			if(main_task_ctrl.timer_cnt.min) {
+				disp_show_number(main_task_ctrl.timer_cnt.min);
+			}
+			else {
+				disp_show_number(main_task_ctrl.timer_cnt.sec);
+			}
+			if(main_task_ctrl.disp_state) {
+				if(main_task_ctrl.timer_cnt.sec & 0x01)
+					disp_show_activity_on();
+				else
+					disp_show_activity_off();
+			}
 		}
-
-		if(event == EV_ENC_SINGLE_PRESSED) {
-			main_task_ctrl.state = MAIN_ST_TEST; // to set breakpoint
-
+		if(event == EV_ENC_SINGLE_PRESSED) { // pause
+			main_task_ctrl.state = MAIN_ST_PAUSE;
 			rtc_start_1s_timing_event();
+			if(main_task_ctrl.timer_cnt.min) {
+				disp_show_number(main_task_ctrl.timer_cnt.min);
+			}
+			else {
+				disp_show_number(main_task_ctrl.timer_cnt.sec);
+			}
+			disp_show_activity_off();
+			main_task_ctrl.disp_state = 0;
+		}
+		if(event == EV_ENC_LONG_PRESSED) { // stop, set time
+			main_task_ctrl.state = MAIN_ST_SET_TIMER;
+			disp_show_number(main_task_ctrl.timer_set.min);
+			main_task_ctrl.disp_timeout = TIMER_DISP_ON_TIMEOUT;
+			rtc_start_1s_timing_event();
+		}
+		break;
 
-			main_num = 11;
-			disp_show_number(main_num);
+	// -------------------------------------------------------------------------
+	case MAIN_ST_RUNNING_DISP_OFF:
+		break;
+
+	// -------------------------------------------------------------------------
+	case MAIN_ST_PAUSE:
+		if(event == EV_TIMER_RTC) { // blink time
+			if(main_task_ctrl.disp_state == 0) {
+				main_task_ctrl.disp_state = 1;
+				disp_number_off();
+			}
+			else {
+				main_task_ctrl.disp_state = 0;
+				if(main_task_ctrl.timer_cnt.min) {
+					disp_show_number(main_task_ctrl.timer_cnt.min);
+				}
+				else {
+					disp_show_number(main_task_ctrl.timer_cnt.sec);
+				}
+			}
 		}
-		if(event == EV_ENC_DOUBLE_PRESSED) {
-			main_task_ctrl.state = MAIN_ST_TEST;
-			disp_set_frame(0x007FF800U);
-		}
-		if(event == EV_ENC_LONG_PRESSED) {
-			main_task_ctrl.state = MAIN_ST_TEST;
-			disp_set_frame(0x000007FFU);
-		}
-		if(event == EV_ENC_ROT_LEFT) {
-			main_task_ctrl.state = MAIN_ST_TEST;
-			if(main_bright > 10)
-				main_bright -= 10;
-			disp_set_brightness(main_bright);
-			main_num++;
-			if(main_num > 99)
-				main_num = 0;
-			disp_show_number(main_num);
-		}
-		if(event == EV_ENC_ROT_RIGHT) {
-			main_task_ctrl.state = MAIN_ST_TEST;
-			if(main_bright < 100)
-				main_bright += 10;
-			disp_set_brightness(main_bright);
-			main_num++;
-			if(main_num > 99)
-				main_num = 0;
-			disp_show_number(main_num);
+		break;
+
+	// -------------------------------------------------------------------------// -------------------------------------------------------------------------
+	case MAIN_ST_ALARM:
+		if(event == EV_TIMER_RTC) {
+			main_task_ctrl.state = MAIN_ST_ALARM;
 		}
 		break;
 	}
@@ -216,6 +279,7 @@ int main(void)
   MX_RTC_Init();
   MX_TIM22_Init();
   MX_TIM2_Init();
+  MX_TIM21_Init();
   /* USER CODE BEGIN 2 */
 	scheduler_init();
 	power_mode_request(POWER_MODE_RUN);

@@ -152,7 +152,6 @@ void disp_init(void) {
 	disp_ctrl.activity.bright.cnt = 50;
 	disp_ctrl.activity.bright.max = disp_ctrl.brightness;
 	disp_ctrl.activity.bright.min = 25;
-	LL_TIM_EnableCounter(DISP_TIM);
 }
 
 void disp_set_brightness(uint8_t bright) {
@@ -171,10 +170,12 @@ void disp_on(void) {
 	// reset gpio
 	LL_TIM_ClearFlag_CC1(DISP_TIM);
 	LL_TIM_EnableIT_CC1(DISP_TIM);
+	LL_TIM_EnableCounter(DISP_TIM);
 	return;
 }
 
 void disp_off(void) {
+	LL_TIM_DisableCounter(DISP_TIM);
 	disp_disable_all_leds();
 	LL_TIM_ClearFlag_UPDATE(DISP_TIM);
 	LL_TIM_DisableIT_UPDATE(DISP_TIM);

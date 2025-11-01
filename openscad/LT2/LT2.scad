@@ -242,7 +242,7 @@ module case_bottom(dia1 = 43, dia2 = 50, th1 = 4, loc_res = 32) {
     }
 }
 
-pcb();
+*pcb();
 *pcb_cut();
-*case_top(loc_res = 128); // print 1 x
+case_top(loc_res = 128); // print 1 x
 *case_bottom(loc_res = 128); // print 1 x

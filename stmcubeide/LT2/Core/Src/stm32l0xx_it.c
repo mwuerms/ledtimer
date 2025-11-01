@@ -215,6 +215,26 @@ void TIM2_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles TIM21 global interrupt.
+  */
+void TIM21_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM21_IRQn 0 */
+	if (LL_TIM_IsActiveFlag_CC1(TIM21)) {
+		LL_TIM_ClearFlag_CC1(TIM21);
+		encoder_btn_timer_pressed_isr();
+	}
+	if (LL_TIM_IsActiveFlag_CC2(TIM21)) {
+		LL_TIM_ClearFlag_CC2(TIM21);
+		encoder_btn_timer_long_pressed_isr();
+}
+  /* USER CODE END TIM21_IRQn 0 */
+  /* USER CODE BEGIN TIM21_IRQn 1 */
+
+  /* USER CODE END TIM21_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM22 global interrupt.
   */
 void TIM22_IRQHandler(void)
@@ -223,7 +243,6 @@ void TIM22_IRQHandler(void)
 	if (LL_TIM_IsActiveFlag_UPDATE(TIM22)) {
 		LL_TIM_ClearFlag_UPDATE(TIM22);
 		disp_timer_isr_gpio_set();
-		encoder_timer_isr();
 	}
 	if (LL_TIM_IsActiveFlag_CC1(TIM22)) {
 		LL_TIM_ClearFlag_CC1(TIM22);
