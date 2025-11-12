@@ -80,7 +80,8 @@ void power_mode_sleep(void) {
 			// - mcu specific code here ------------
 			while (events_is_main_fifo_empty() == true) {
 				// stay here in sleep mode
-				//HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+				LL_LPM_EnableSleep();
+				__WFI();
 			}
 			break;
 		case POWER_MODE_STOP:
@@ -88,9 +89,9 @@ void power_mode_sleep(void) {
 			// - mcu specific code here ------------
 			while (events_is_main_fifo_empty() == true) {
 				// stay here in stop mode
-				//HAL_SuspendTick();
-				//HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
-				//HAL_ResumeTick();
+				LL_PWR_SetPowerMode(LL_PWR_MODE_STOP);
+				LL_LPM_EnableDeepSleep();
+				__WFI();
 				SystemClock_Config();
 			}
 			break;

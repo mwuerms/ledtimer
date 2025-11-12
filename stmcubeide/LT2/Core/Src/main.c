@@ -95,9 +95,10 @@ static int8_t main_task_func(uint8_t event, void *data) {
 	switch(main_task_ctrl.state) {
 	// -------------------------------------------------------------------------
 	case MAIN_ST_OFF:
-		if( (event == EV_START) ||
+		if( /*(event == EV_START) ||*/
 			(event == EV_ENC_SINGLE_PRESSED)) {
 			// was in off state
+			power_mode_request(POWER_MODE_SLEEP); // to display time and timer functionalities
 			main_task_ctrl.state = MAIN_ST_SET_TIMER;
 			main_task_ctrl.timer_set.min = 1;
 			main_task_ctrl.timer_set.sec = 0;
@@ -263,6 +264,27 @@ static int8_t main_task_func(uint8_t event, void *data) {
 	return 1; // stay on
 }
 
+/*
+ * power modes, cases
+ *
+ * 1. case 0: nothing to do, no data to preserve
+ *   + available power modes: **stop**
+ *   + all power down,
+ *   + wakeup by rotary encoder, press or rotate -> EXTI, GPIO only
+ *   + available power modes:
+ *     + GPIO + EXTI: run; sleep; low-power run; low-power-sleep; stop; wake up from standby:
+ *       + PA0: WKUP1: ENC_A_Pin -> rotate knob to wake
+ *       + PA2: WKUP3: unused (UART2_TX)
+ * 2. case 1: display, setup time, count down time
+ *   + use power mode: **sleep**
+ *   + active: rotary encoder + button -> 16-bit timers
+ *   + RTC timer
+ *   + display -> 16-bit timers
+ *   + CPU may be off, when there is nothing to do
+ *   + available power modes:
+ *     + 16-bit timers: run; **sleep**; low-power run; low-power-sleep; - ; -
+ *     + RTC: run; sleep; low-power run; low-power-sleep; stop; standby
+ */
 
 /* USER CODE END 0 */
 
@@ -305,7 +327,8 @@ int main(void)
   MX_TIM21_Init();
   /* USER CODE BEGIN 2 */
 	scheduler_init();
-	power_mode_request(POWER_MODE_RUN);
+	//power_mode_request(POWER_MODE_SLEEP); // to display time and timer functionalities
+	power_mode_request(POWER_MODE_STOP); // no to do: power down everything, but generate INT on encoder input
 
 	encoder_init();
 	disp_init();

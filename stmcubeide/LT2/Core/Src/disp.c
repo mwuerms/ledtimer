@@ -160,9 +160,9 @@ void disp_init(void) {
 	disp_off();
 	disp_ctrl.led_index = 0;
 	disp_set_brightness(100);
-	disp_show_number(12);
+	/*disp_show_number(12);
 	disp_activity_on();
-	disp_on();
+	disp_on();*/
 	disp_ctrl.activity.state = 0;
 	disp_ctrl.activity.bright.cnt = 50;
 	disp_ctrl.activity.bright.max = disp_ctrl.brightness;
