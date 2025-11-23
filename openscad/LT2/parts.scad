@@ -242,12 +242,12 @@ module rotary_encoder_pec11s_929k(loc_res = 32) {
 
 module rotary_encoder_pec11s_929k_cut(loc_res = 32) {
     // body
-    translate([-16.6/2, -12.4/2, 0])
-    cube([16.6, 12.4, 5.3]);
+    translate([-16.6/2, -12.2/2, 0])
+    cube([16.6, 12.2, 5.3]);
     // working contacts
     // mounting contacts
-    translate([-18/2, -12.4/2, 0])
-    cube([18.4, 12.5, 1.4]);
+    translate([-18/2, -12.2/2, 0])
+    cube([18.4, 12.2, 1.4]);
     // positioning pegs
     translate([0, 0, -1.4])
     cylinder(d = 2.4, h = 1.5, $fn = loc_res);
@@ -259,3 +259,27 @@ module rotary_encoder_pec11s_929k_cut(loc_res = 32) {
     // kurled head
 }
 rotary_encoder_pec11s_929k_cut();
+
+module vibra_motor(loc_res = 32) {
+    color("LightGray")
+    translate([0, 0, 0])
+    cylinder(d = 10, h = 3.6, $fn = loc_res);
+    // cussion on top
+    color("Black")
+    translate([0, 0, 0.1])
+    cylinder(d = 9, h = 4, $fn = loc_res);
+    // el. connection
+    translate([-3/2, 9/2, 0.01])
+    cube([3, 3, 2]);
+}
+//vibra_motor();
+
+module vibra_motor_cut(loc_res = 32) {
+    translate([0, 0, 0])
+    cylinder(d = 11, h = 4.3, $fn = loc_res);
+    // cussion on top
+    // el. connection
+    translate([-3.6/2, 9/2, 0])
+    cube([3.6, 3.2, 4.3]);
+}
+//vibra_motor_cut();

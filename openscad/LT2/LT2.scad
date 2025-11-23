@@ -160,13 +160,17 @@ module pcb(loc_res = 32) {
         rotate([90, 0, 0])
         cylinder(d = 3, h = 8, $fn = loc_res);
     }
+    // vibra motor
+    translate([-10, -14.4, -1.6])
+    rotate([180, 0, 135])
+    vibra_motor();
 }
 
 module pcb_cut(loc_res = 32) {
     // cut pcb
     difference() {
-        translate([0, 0, -(1.8)])
-        cylinder(d = 39.6, h = 2, $fn = loc_res);
+        translate([0, 0, -(2.1)])
+        cylinder(d = 40, h = 2.3, $fn = loc_res);
         translate([-39.6/2, -39/2+34, -(1.6+1)])
         cube([39, 34.2, 1.6+2]);
     }
@@ -177,8 +181,8 @@ module pcb_cut(loc_res = 32) {
     translate([0, -8.4, -1])
     place_led_cuts(h1 = 4+1);
     // cut akku/battery
-    translate([-36/2, -19/2, -6])
-    cube([36, 19, 5]);
+    translate([-36/2, -20/2, -7])
+    cube([36, 20, 7.0]);
     // cut rotary encoder
     translate([0, -39/2+34-0.2, -2])
     rotate([-90, 0, 0])
@@ -202,6 +206,10 @@ module pcb_cut(loc_res = 32) {
         rotate([90, 0, 0])
         cylinder(d = 7, h = 18, $fn = loc_res);
     }
+    // vibra motor
+    translate([-10, -14.4, -2.0])
+    rotate([180, 0, 135])
+    vibra_motor_cut(loc_res = loc_res);
 }
 
 module case_top(dia1 = 43, dia2 = 50, th1 = 4, loc_res = 32) {
@@ -244,5 +252,5 @@ module case_bottom(dia1 = 43, dia2 = 50, th1 = 4, loc_res = 32) {
 
 *pcb();
 *pcb_cut();
-case_top(loc_res = 128); // print 1 x
-*case_bottom(loc_res = 128); // print 1 x
+*case_top(loc_res = 128); // print 1 x
+case_bottom(loc_res = 128); // print 1 x
