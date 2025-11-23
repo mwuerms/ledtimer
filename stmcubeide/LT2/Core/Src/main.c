@@ -84,7 +84,8 @@ static struct {
 #define TIMER_SET_MIN_MINUTES (01)
 #define TIMER_SET_SECONDS (59)
 
-#define TIMER_DISP_ON_TIMEOUT (20) // in s
+#define TIMER_DISP_ON_TIMEOUT (30) // in s
+#define TIMER_DISP_ALARM_TIMEOUT (30) // in s
 
 uint8_t main_bright = 20;
 uint8_t main_num = 0;
@@ -95,7 +96,7 @@ static int8_t main_task_func(uint8_t event, void *data) {
 	switch(main_task_ctrl.state) {
 	// -------------------------------------------------------------------------
 	case MAIN_ST_OFF:
-		if( /*(event == EV_START) ||*/
+		if( (event == EV_START) ||
 			(event == EV_ENC_SINGLE_PRESSED)) {
 			// was in off state
 			power_mode_request(POWER_MODE_SLEEP); // to display time and timer functionalities
@@ -118,7 +119,10 @@ static int8_t main_task_func(uint8_t event, void *data) {
 				if(main_task_ctrl.disp_timeout == 0) {
 					// expired
 					main_task_ctrl.state = MAIN_ST_OFF;
+					power_mode_release(POWER_MODE_SLEEP);
 					rtc_stop_timing_event();
+					encoder_btn_use_int_only();
+					disp_off();
 				}
 			}
 		}
@@ -146,8 +150,10 @@ static int8_t main_task_func(uint8_t event, void *data) {
 		}
 		if(event == EV_ENC_LONG_PRESSED) { // stop, off
 			main_task_ctrl.state = MAIN_ST_OFF;
+			power_mode_release(POWER_MODE_SLEEP);
 			rtc_stop_timing_event();
 			encoder_btn_use_int_only();
+			disp_off();
 		}
 		break;
 
@@ -160,7 +166,9 @@ static int8_t main_task_func(uint8_t event, void *data) {
 					// expired: ALARM
 					main_task_ctrl.state = MAIN_ST_ALARM;
 					main_task_ctrl.disp_state = 0;
+					main_task_ctrl.disp_timeout = TIMER_DISP_ALARM_TIMEOUT;
 					disp_show_number(main_task_ctrl.timer_set.min);
+
 				}
 				else {
 					main_task_ctrl.timer_cnt.sec = TIMER_SET_SECONDS;
@@ -242,6 +250,16 @@ static int8_t main_task_func(uint8_t event, void *data) {
 	// -------------------------------------------------------------------------// -------------------------------------------------------------------------
 	case MAIN_ST_ALARM:
 		if(event == EV_TIMER_RTC) { // blink time
+			if(main_task_ctrl.disp_timeout) {
+				main_task_ctrl.disp_timeout--;
+				if(main_task_ctrl.disp_timeout == 0) {
+					// expired
+					main_task_ctrl.state = MAIN_ST_SET_TIMER;
+					disp_show_number(main_task_ctrl.timer_set.min);
+					main_task_ctrl.disp_timeout = TIMER_DISP_ON_TIMEOUT;
+					rtc_start_1s_timing_event();
+				}
+			}
 			if(main_task_ctrl.disp_state == 0) {
 				main_task_ctrl.disp_state = 1;
 				disp_number_off();
