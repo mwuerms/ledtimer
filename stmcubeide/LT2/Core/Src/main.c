@@ -87,10 +87,13 @@ static struct {
 #define TIMER_DISP_ON_TIMEOUT (30) // in s
 #define TIMER_DISP_ALARM_TIMEOUT (30) // in s
 
-uint8_t main_bright = 20;
-uint8_t main_num = 0;
-uint8_t main_cnt = 0;
-uint32_t main_f = 0x00000001U;
+static inline void vibra_off(void) {
+	LL_GPIO_ResetOutputPin(VIBRA_GPIO_Port, VIBRA_Pin);
+}
+
+static inline void vibra_on(void) {
+	LL_GPIO_SetOutputPin(VIBRA_GPIO_Port, VIBRA_Pin);
+}
 
 static int8_t main_task_func(uint8_t event, void *data) {
 	switch(main_task_ctrl.state) {
@@ -108,6 +111,7 @@ static int8_t main_task_func(uint8_t event, void *data) {
 			main_task_ctrl.disp_timeout = TIMER_DISP_ON_TIMEOUT;
 			rtc_start_1s_timing_event();
 			encoder_btn_use_debounce();
+			vibra_off();
 		}
 		break;
 
@@ -123,6 +127,7 @@ static int8_t main_task_func(uint8_t event, void *data) {
 					rtc_stop_timing_event();
 					encoder_btn_use_int_only();
 					disp_off();
+					vibra_off();
 				}
 			}
 		}
@@ -168,7 +173,7 @@ static int8_t main_task_func(uint8_t event, void *data) {
 					main_task_ctrl.disp_state = 0;
 					main_task_ctrl.disp_timeout = TIMER_DISP_ALARM_TIMEOUT;
 					disp_show_number(main_task_ctrl.timer_set.min);
-
+					vibra_on();
 				}
 				else {
 					main_task_ctrl.timer_cnt.sec = TIMER_SET_SECONDS;
@@ -258,15 +263,19 @@ static int8_t main_task_func(uint8_t event, void *data) {
 					disp_show_number(main_task_ctrl.timer_set.min);
 					main_task_ctrl.disp_timeout = TIMER_DISP_ON_TIMEOUT;
 					rtc_start_1s_timing_event();
+					vibra_off();
+					break;
 				}
 			}
 			if(main_task_ctrl.disp_state == 0) {
 				main_task_ctrl.disp_state = 1;
 				disp_number_off();
+				vibra_off();
 			}
 			else {
 				main_task_ctrl.disp_state = 0;
 				disp_show_number(main_task_ctrl.timer_set.min);
+				vibra_on();
 			}
 		}
 		if( (event == EV_ENC_SINGLE_PRESSED) ||
@@ -275,6 +284,7 @@ static int8_t main_task_func(uint8_t event, void *data) {
 			disp_show_number(main_task_ctrl.timer_set.min);
 			main_task_ctrl.disp_timeout = TIMER_DISP_ON_TIMEOUT;
 			rtc_start_1s_timing_event();
+			vibra_off();
 		}
 		break;
 	}
@@ -350,11 +360,11 @@ int main(void)
 
 	encoder_init();
 	disp_init();
+	vibra_off();
 
 	scheduler_add_task(&main_task);
 	main_tid = main_task.tid;
 	scheduler_start_task(main_tid);
-
 
 	// stay in scheduler
 	scheduler_run();

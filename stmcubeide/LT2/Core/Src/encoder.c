@@ -58,22 +58,22 @@ void encoder_init(void) {
 void encoder_a_isr(void) {
 	if(LL_GPIO_ReadInputPort(ENC_A_GPIO_Port) & ENC_A_Pin) {
 		if(LL_GPIO_ReadInputPort(ENC_B_GPIO_Port) & ENC_B_Pin) {
-			// A set, B set -> right
-			scheduler_send_event(main_tid, EV_ENC_ROT_RIGHT, NULL);
+			// A set, B set -> left
+			scheduler_send_event(main_tid, EV_ENC_ROT_LEFT, NULL);
 		}
 		else {
-			// A set, B reset -> left
-			scheduler_send_event(main_tid, EV_ENC_ROT_LEFT, NULL);
+			// A set, B reset -> right
+			scheduler_send_event(main_tid, EV_ENC_ROT_RIGHT, NULL);
 		}
 	}
 	else {
 		if(LL_GPIO_ReadInputPort(ENC_B_GPIO_Port) & ENC_B_Pin) {
-			// A reset, B set -> left
-			scheduler_send_event(main_tid, EV_ENC_ROT_LEFT, NULL);
+			// A reset, B set -> right
+			scheduler_send_event(main_tid, EV_ENC_ROT_RIGHT, NULL);
 		}
 		else {
-			// A reset, B reset -> right
-			scheduler_send_event(main_tid, EV_ENC_ROT_RIGHT, NULL);
+			// A reset, B reset -> left
+			scheduler_send_event(main_tid, EV_ENC_ROT_LEFT, NULL);
 		}
 	}
 }
